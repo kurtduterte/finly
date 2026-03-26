@@ -49,3 +49,6 @@ lefthook-local.yml
 
 # Coverage
 coverage/
+
+# Large AI model — download manually (see developer setup in README)
+assets/models/
