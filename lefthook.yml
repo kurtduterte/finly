@@ -1,0 +1,21 @@
+pre-commit:
+  parallel: true
+  commands:
+    format:
+      glob: "*.dart"
+      run: dart format --set-exit-if-changed lib test
+      fail_text: |
+        Dart formatting issues found.
+        Run: dart format lib test
+    analyze:
+      run: flutter analyze --fatal-infos
+      fail_text: |
+        Flutter analyze failed.
+        Fix all warnings and errors before committing.
+
+pre-push:
+  commands:
+    test:
+      run: flutter test
+      fail_text: |
+        Tests failed. Fix failing tests before pushing.

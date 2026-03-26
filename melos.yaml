@@ -1,0 +1,84 @@
+name: finly
+
+packages:
+  - .
+
+command:
+  bootstrap:
+    usePubspecOverrides: true
+
+scripts:
+  # ---------------------------------------------------------------------------
+  # Code quality
+  # ---------------------------------------------------------------------------
+  analyze:
+    run: flutter analyze --fatal-infos
+    description: Run Flutter static analysis (fails on infos too)
+
+  format:
+    run: dart format lib test
+    description: Format all Dart code in lib/ and test/
+
+  format:check:
+    run: dart format --set-exit-if-changed lib test
+    description: Check formatting without modifying files (used in CI/hooks)
+
+  lint:
+    run: melos run format:check && melos run analyze
+    description: Run format check + analyze together
+
+  # ---------------------------------------------------------------------------
+  # Testing
+  # ---------------------------------------------------------------------------
+  test:
+    run: flutter test
+    description: Run all unit and widget tests
+
+  test:coverage:
+    run: flutter test --coverage
+    description: Run tests and generate lcov coverage report
+
+  test:watch:
+    run: flutter test --reporter expanded
+    description: Run tests with verbose output
+
+  # ---------------------------------------------------------------------------
+  # Code generation
+  # ---------------------------------------------------------------------------
+  gen:
+    run: dart run build_runner build --delete-conflicting-outputs
+    description: Run build_runner once (freezed, drift, json_serializable)
+
+  gen:watch:
+    run: dart run build_runner watch --delete-conflicting-outputs
+    description: Run build_runner in watch mode during development
+
+  # ---------------------------------------------------------------------------
+  # Build
+  # ---------------------------------------------------------------------------
+  build:apk:
+    run: flutter build apk --release
+    description: Build release APK
+
+  build:appbundle:
+    run: flutter build appbundle --release
+    description: Build release AAB for Play Store
+
+  build:ios:
+    run: flutter build ipa --release
+    description: Build release IPA for App Store
+
+  # ---------------------------------------------------------------------------
+  # Maintenance
+  # ---------------------------------------------------------------------------
+  clean:
+    run: flutter clean && flutter pub get
+    description: Clean build cache and reinstall dependencies
+
+  upgrade:
+    run: flutter pub upgrade --major-versions
+    description: Upgrade all dependencies to latest major versions
+
+  outdated:
+    run: flutter pub outdated
+    description: Show outdated dependencies
