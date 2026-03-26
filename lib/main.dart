@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:finly/ui/feature/home/widgets/home_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -12,7 +11,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: const HomeScreen(),
+      home: Text('Hello world'),
     );
   }
 }
