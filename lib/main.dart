@@ -1,6 +1,6 @@
-import 'package:finly/features/ai_test/presentation/screens/ai_test_screen.dart';
 import 'package:finly/features/auth/presentation/providers/auth_providers.dart';
 import 'package:finly/features/auth/presentation/screens/login_screen.dart';
+import 'package:finly/features/home/presentation/screens/home_screen.dart';
 import 'package:finly/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -40,7 +40,7 @@ class _AppRouter extends ConsumerWidget {
       error: (e, _) => Scaffold(
         body: Center(child: Text('Error: $e')),
       ),
-      data: (user) => user == null ? const LoginScreen() : const AiTestScreen(),
+      data: (user) => user == null ? const LoginScreen() : const HomeScreen(),
     );
   }
 }
