@@ -30,7 +30,7 @@ const _destinations = [
 
 const _titles = ['Finly', 'Expenses', 'Scan Receipt', 'Settings'];
 
-const _pages = [
+const List<Widget> _pages = [
   HomeScreen(),
   ExpensesScreen(),
   ScanScreen(),
