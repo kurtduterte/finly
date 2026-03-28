@@ -9,7 +9,14 @@ const _months = [
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
 ];
 
-String _formatDate(DateTime d) => '${_months[d.month - 1]} ${d.day}, ${d.year}';
+String _formatDate(DateTime d) =>
+    '${_months[d.month - 1]} ${d.day}, ${d.year}';
+
+// Parses "[type] desc" → (type, desc). Returns null if no match.
+(String, String)? _parseOther(String description) {
+  final m = RegExp(r'^\[(.+?)\] (.*)$').firstMatch(description);
+  return m != null ? (m.group(1)!, m.group(2)!) : null;
+}
 
 class ExpenseFormScreen extends ConsumerStatefulWidget {
   const ExpenseFormScreen({this.initial, super.key});
@@ -22,10 +29,13 @@ class ExpenseFormScreen extends ConsumerStatefulWidget {
 class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _amountCtrl;
+  late final TextEditingController _otherTypeCtrl;
   late final TextEditingController _descCtrl;
   late DateTime _date;
   Category? _category;
   Account? _account;
+
+  bool get _isOther => _category?.name == 'Other';
 
   @override
   void initState() {
@@ -34,15 +44,24 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
     _amountCtrl = TextEditingController(
       text: e != null ? (e.amountCentavos / 100).toStringAsFixed(2) : '',
     );
-    _descCtrl = TextEditingController(text: e?.description ?? '');
     _date = e?.date ?? DateTime.now();
     _category = widget.initial?.category;
     _account = widget.initial?.account;
+
+    var otherType = '';
+    var desc = e?.description ?? '';
+    if (_category?.name == 'Other' && desc.isNotEmpty) {
+      final parsed = _parseOther(desc);
+      if (parsed != null) (otherType, desc) = parsed;
+    }
+    _otherTypeCtrl = TextEditingController(text: otherType);
+    _descCtrl = TextEditingController(text: desc);
   }
 
   @override
   void dispose() {
     _amountCtrl.dispose();
+    _otherTypeCtrl.dispose();
     _descCtrl.dispose();
     super.dispose();
   }
@@ -61,17 +80,20 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
     if (!_formKey.currentState!.validate()) return;
     if (_category == null || _account == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a category and account')),
+        const SnackBar(content: Text('Select a category and account')),
       );
       return;
     }
     final centavos = (double.parse(_amountCtrl.text) * 100).round();
+    final type = _otherTypeCtrl.text.trim();
+    final desc = _descCtrl.text.trim();
+    final description = _isOther ? '[$type] $desc' : desc;
     final notifier = ref.read(expensesNotifierProvider.notifier);
     if (widget.initial == null) {
       await notifier.add(
         ExpensesCompanion.insert(
           amountCentavos: centavos,
-          description: _descCtrl.text.trim(),
+          description: description,
           date: _date,
           categoryId: _category!.id,
           accountId: _account!.id,
@@ -81,7 +103,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
       await notifier.updateExpense(
         widget.initial!.expense.copyWith(
           amountCentavos: centavos,
-          description: _descCtrl.text.trim(),
+          description: description,
           date: _date,
           categoryId: _category!.id,
           accountId: _account!.id,
@@ -90,6 +112,11 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
     }
     if (mounted) Navigator.of(context).pop();
   }
+
+  void _onCategoryChanged(Category? v) => setState(() {
+        if (v?.name != 'Other') _otherTypeCtrl.clear();
+        _category = v;
+      });
 
   @override
   Widget build(BuildContext context) {
@@ -143,7 +170,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
                 items: list
                     .map((c) => DropdownMenuItem(value: c, child: Text(c.name)))
                     .toList(),
-                onChanged: (v) => setState(() => _category = v),
+                onChanged: _onCategoryChanged,
                 validator: (v) => v == null ? 'Required' : null,
               ),
               loading: () => const SizedBox(
@@ -152,6 +179,18 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
               ),
               error: (_, _) => const Text('Failed to load categories'),
             ),
+            if (_isOther) ...[
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _otherTypeCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Expense type',
+                  hintText: 'e.g. Pet care, Gift, Miscellaneous',
+                ),
+                validator: (v) =>
+                    (v == null || v.trim().isEmpty) ? 'Required' : null,
+              ),
+            ],
             const SizedBox(height: 16),
             accounts.when(
               data: (list) => DropdownButtonFormField<Account>(
