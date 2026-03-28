@@ -1,25 +1,46 @@
-import 'package:finly/ai/gemma_service.dart';
+import 'dart:async';
+
+import 'package:finly/ai/gemma_service_provider.dart';
+import 'package:finly/features/auth/presentation/providers/auth_providers.dart';
+import 'package:finly/features/model_setup/presentation/providers/gemma_setup_notifier.dart';
+import 'package:finly/features/model_setup/presentation/widgets/model_setup_modal.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class AiTestScreen extends StatefulWidget {
-  const AiTestScreen({required this.gemmaService, super.key});
-
-  final GemmaService gemmaService;
+class AiTestScreen extends ConsumerStatefulWidget {
+  const AiTestScreen({super.key});
 
   @override
-  State<AiTestScreen> createState() => _AiTestScreenState();
+  ConsumerState<AiTestScreen> createState() => _AiTestScreenState();
 }
 
-class _AiTestScreenState extends State<AiTestScreen> {
+class _AiTestScreenState extends ConsumerState<AiTestScreen> {
   final _controller = TextEditingController();
 
   bool _isLoading = false;
   String? _response;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final setupState = ref.read(gemmaSetupProvider);
+      if (setupState is! GemmaSetupReady) {
+        unawaited(
+          showModalBottomSheet<void>(
+            context: context,
+            isDismissible: false,
+            enableDrag: false,
+            builder: (_) => const ModelSetupModal(),
+          ),
+        );
+      }
+    });
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
-    widget.gemmaService.dispose();
     super.dispose();
   }
 
@@ -33,7 +54,8 @@ class _AiTestScreenState extends State<AiTestScreen> {
     });
 
     try {
-      final result = await widget.gemmaService.generateResponse(prompt);
+      final result =
+          await ref.read(gemmaServiceProvider).generateResponse(prompt);
       setState(() => _response = result);
     } on Exception catch (e) {
       setState(() => _response = 'Error: $e');
@@ -45,7 +67,17 @@ class _AiTestScreenState extends State<AiTestScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('AI Test')),
+      appBar: AppBar(
+        title: const Text('AI Test'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () =>
+                ref.read(authNotifierProvider.notifier).signOut(),
+            tooltip: 'Sign out',
+          ),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

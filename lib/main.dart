@@ -1,12 +1,15 @@
-import 'package:finly/ai/gemma_service.dart';
 import 'package:finly/features/ai_test/presentation/screens/ai_test_screen.dart';
-import 'package:finly/features/model_setup/presentation/screens/model_setup_screen.dart';
+import 'package:finly/features/auth/presentation/providers/auth_providers.dart';
+import 'package:finly/features/auth/presentation/screens/login_screen.dart';
+import 'package:finly/firebase_options.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gemma/flutter_gemma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await FlutterGemma.initialize();
   runApp(const ProviderScope(child: FinlyApp()));
 }
@@ -16,37 +19,28 @@ class FinlyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: _StartupRouter(),
+      home: _AppRouter(),
     );
   }
 }
 
-// Checks if the model is already loaded; routes accordingly
-class _StartupRouter extends StatefulWidget {
-  @override
-  State<_StartupRouter> createState() => _StartupRouterState();
-}
-
-class _StartupRouterState extends State<_StartupRouter> {
-  final _gemmaService = GemmaService();
+class _AppRouter extends ConsumerWidget {
+  const _AppRouter();
 
   @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<bool>(
-      future: _gemmaService.isModelReady(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-        if (snapshot.data!) {
-          return AiTestScreen(gemmaService: _gemmaService);
-        }
-        return ModelSetupScreen(gemmaService: _gemmaService);
-      },
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authStateProvider);
+
+    return authState.when(
+      loading: () => const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      ),
+      error: (e, _) => Scaffold(
+        body: Center(child: Text('Error: $e')),
+      ),
+      data: (user) => user == null ? const LoginScreen() : const AiTestScreen(),
     );
   }
 }
