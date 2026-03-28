@@ -34,6 +34,16 @@ class GemmaService {
     return buffer.toString();
   }
 
+  // Streams tokens from Gemma as they are generated
+  Stream<String> streamResponse(String prompt) async* {
+    _model ??= await FlutterGemma.getActiveModel();
+    final chat = await _model!.createChat();
+    await chat.addQueryChunk(Message.text(text: prompt));
+    await for (final token in chat.generateChatResponseAsync()) {
+      if (token is TextResponse) yield token.token;
+    }
+  }
+
   void dispose() {
     unawaited(_model?.close());
     _model = null;
