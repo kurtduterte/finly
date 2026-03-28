@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:finly/features/ai_chat/presentation/providers/chat_notifier.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -23,10 +25,12 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 250),
-          curve: Curves.easeOut,
+        unawaited(
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOut,
+          ),
         );
       }
     });
@@ -36,7 +40,7 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
     final text = _textController.text.trim();
     if (text.isEmpty) return;
     _textController.clear();
-    ref.read(chatNotifierProvider.notifier).sendMessage(text);
+    unawaited(ref.read(chatNotifierProvider.notifier).sendMessage(text));
     _scrollToBottom();
   }
 
@@ -44,7 +48,7 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
   Widget build(BuildContext context) {
     final chat = ref.watch(chatNotifierProvider);
 
-    ref.listen(chatNotifierProvider, (_, __) => _scrollToBottom());
+    ref.listen(chatNotifierProvider, (_, _) => _scrollToBottom());
 
     return Scaffold(
       appBar: AppBar(title: const Text('AI Chat')),
