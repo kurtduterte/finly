@@ -1,11 +1,14 @@
 import 'dart:async';
 
+import 'package:finly/core/db/app_database.dart';
 import 'package:finly/features/ai_chat/presentation/providers/chat_notifier.dart';
+import 'package:finly/features/ai_chat/presentation/providers/chat_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class AiChatScreen extends ConsumerStatefulWidget {
-  const AiChatScreen({super.key});
+  const AiChatScreen({this.conversationId, super.key});
+  final int? conversationId;
 
   @override
   ConsumerState<AiChatScreen> createState() => _AiChatScreenState();
@@ -14,6 +17,18 @@ class AiChatScreen extends ConsumerStatefulWidget {
 class _AiChatScreenState extends ConsumerState<AiChatScreen> {
   final _textController = TextEditingController();
   final _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(
+      Future.microtask(
+        () => ref
+            .read(chatNotifierProvider.notifier)
+            .setConversation(widget.conversationId),
+      ),
+    );
+  }
 
   @override
   void dispose() {
@@ -46,27 +61,74 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final chat = ref.watch(chatNotifierProvider);
+    final chatState = ref.watch(chatNotifierProvider);
+    final convId = chatState.conversationId;
 
-    ref.listen(chatNotifierProvider, (_, _) => _scrollToBottom());
+    ref.listen<ChatState>(chatNotifierProvider, (_, _) => _scrollToBottom());
+
+    final messagesAsync = convId != null
+        ? ref.watch(conversationMessagesProvider(convId))
+        : const AsyncData<List<ChatMessage>>([]);
 
     return Scaffold(
       appBar: AppBar(title: const Text('AI Chat')),
       body: Column(
         children: [
           Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              itemCount: chat.messages.length,
-              itemBuilder: (context, i) =>
-                  _ChatBubble(message: chat.messages[i]),
+            child: messagesAsync.when(
+              loading: () =>
+                  const Center(child: CircularProgressIndicator()),
+              error: (e, _) => Center(child: Text('Error: $e')),
+              data: (messages) {
+                final hasStreaming = chatState.isGenerating &&
+                    chatState.streamingBuffer.isNotEmpty;
+                final itemCount =
+                    messages.length + (hasStreaming ? 1 : 0);
+
+                if (itemCount == 0) {
+                  return ListView(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    children: const [
+                      _ChatBubble(
+                        text: 'Hi! How can I help you with your Finances?',
+                        isUser: false,
+                      ),
+                    ],
+                  );
+                }
+
+                return ListView.builder(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  itemCount: itemCount,
+                  itemBuilder: (context, i) {
+                    if (i < messages.length) {
+                      final msg = messages[i];
+                      return _ChatBubble(
+                        text: msg.messageText,
+                        isUser: msg.isUser == 1,
+                      );
+                    }
+                    return _ChatBubble(
+                      text: chatState.streamingBuffer,
+                      isUser: false,
+                    );
+                  },
+                );
+              },
             ),
           ),
           _InputRow(
             controller: _textController,
             onSend: _send,
-            enabled: !chat.isGenerating,
+            enabled: !chatState.isGenerating,
           ),
         ],
       ),
@@ -75,13 +137,13 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
 }
 
 class _ChatBubble extends StatelessWidget {
-  const _ChatBubble({required this.message});
-  final ChatMessage message;
+  const _ChatBubble({required this.text, required this.isUser});
+  final String text;
+  final bool isUser;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final isUser = message.isUser;
 
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
@@ -96,7 +158,7 @@ class _ChatBubble extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
         ),
         child: Text(
-          message.text.isEmpty ? '…' : message.text,
+          text.isEmpty ? '…' : text,
           style: TextStyle(
             color: isUser ? cs.onPrimary : cs.onSurface,
           ),

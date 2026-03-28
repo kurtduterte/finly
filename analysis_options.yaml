@@ -10,3 +10,5 @@ linter:
   rules:
     # Relax a few rules for app-level code
     public_member_api_docs: false
+    # Riverpod family providers return unexported types; explicit annotation impossible
+    specify_nonobvious_property_types: false

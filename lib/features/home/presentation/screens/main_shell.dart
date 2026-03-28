@@ -1,4 +1,4 @@
-import 'package:finly/features/ai_chat/presentation/screens/ai_chat_screen.dart';
+import 'package:finly/features/ai_chat/presentation/screens/chat_history_screen.dart';
 import 'package:finly/features/expenses/presentation/screens/expenses_screen.dart';
 import 'package:finly/features/home/presentation/screens/home_screen.dart';
 import 'package:finly/features/scan/presentation/screens/scan_screen.dart';
@@ -59,7 +59,7 @@ class _MainShellState extends State<MainShell> {
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute<void>(
-                builder: (_) => const AiChatScreen(),
+                builder: (_) => const ChatHistoryScreen(),
               ),
             ),
           ),
