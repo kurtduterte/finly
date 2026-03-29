@@ -18,6 +18,18 @@ jobs:
           channel: stable
           cache: true
 
+      # pub get must run before pod cache check — it generates .flutter-plugins
+      # which determines which pods need to be installed.
+      - name: Cache pub packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.pub-cache
+          key: pub-${{ hashFiles('pubspec.lock') }}
+          restore-keys: pub-
+
+      - name: Flutter pub get
+        run: flutter pub get
+
       - name: Cache Gemma model
         id: cache-model
         uses: actions/cache@v4
@@ -33,7 +45,7 @@ jobs:
           mkdir -p assets/models
           if [ -z "$HF_TOKEN" ]; then
             echo "::warning::HF_TOKEN secret not set — model will be a stub. AI features won't work."
-            dd if=/dev/zero bs=1k count=1 | tr '\0' '\x00' > assets/models/gemma3-1b-it-int4.task
+            dd if=/dev/zero bs=1k count=1 of=assets/models/gemma3-1b-it-int4.task
           else
             curl -fL \
               -H "Authorization: Bearer $HF_TOKEN" \
@@ -41,16 +53,8 @@ jobs:
               -o assets/models/gemma3-1b-it-int4.task
           fi
 
-      - name: Cache pub packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.pub-cache
-          key: pub-${{ hashFiles('pubspec.lock') }}
-          restore-keys: pub-
-
-      - name: Flutter pub get
-        run: flutter pub get
-
+      # Cache key includes Podfile + pubspec.lock since Podfile.lock is not
+      # committed. Either changing Flutter deps or the Podfile invalidates pods.
       - name: Cache CocoaPods
         id: cache-pods
         uses: actions/cache@v4
@@ -58,7 +62,7 @@ jobs:
           path: |
             ios/Pods
             ~/.cocoapods
-          key: pods-${{ hashFiles('ios/Podfile.lock') }}
+          key: pods-${{ hashFiles('ios/Podfile', 'pubspec.lock') }}
           restore-keys: pods-
 
       - name: Pod install
@@ -69,12 +73,11 @@ jobs:
       - name: Build iOS (no codesign)
         run: flutter build ios --debug --no-codesign
 
+      # ditto preserves app bundle symlinks and permissions; plain zip does not.
       - name: Package IPA
         run: |
           cd build/ios/iphoneos
-          mkdir Payload
-          cp -r Runner.app Payload/
-          zip -r Finly-debug.ipa Payload
+          ditto -c -k --sequesterRsrc --keepParent Runner.app Finly-debug.ipa
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4

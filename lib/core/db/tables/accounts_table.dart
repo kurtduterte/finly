@@ -7,4 +7,6 @@ class Accounts extends Table {
   IntColumn get balanceCentavos => integer().withDefault(const Constant(0))();
   TextColumn get color => text()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  TextColumn get remoteId => text().nullable()();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 }

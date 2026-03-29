@@ -72,6 +72,29 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
     requiredDuringInsert: false,
     defaultValue: currentDateAndTime,
   );
+  static const VerificationMeta _remoteIdMeta = const VerificationMeta(
+    'remoteId',
+  );
+  @override
+  late final GeneratedColumn<String> remoteId = GeneratedColumn<String>(
+    'remote_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -80,6 +103,8 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
     balanceCentavos,
     color,
     createdAt,
+    remoteId,
+    updatedAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -135,6 +160,18 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
         createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
       );
     }
+    if (data.containsKey('remote_id')) {
+      context.handle(
+        _remoteIdMeta,
+        remoteId.isAcceptableOrUnknown(data['remote_id']!, _remoteIdMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
     return context;
   }
 
@@ -168,6 +205,14 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
       )!,
+      remoteId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}remote_id'],
+      ),
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
     );
   }
 
@@ -184,6 +229,8 @@ class Account extends DataClass implements Insertable<Account> {
   final int balanceCentavos;
   final String color;
   final DateTime createdAt;
+  final String? remoteId;
+  final DateTime updatedAt;
   const Account({
     required this.id,
     required this.name,
@@ -191,6 +238,8 @@ class Account extends DataClass implements Insertable<Account> {
     required this.balanceCentavos,
     required this.color,
     required this.createdAt,
+    this.remoteId,
+    required this.updatedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -201,6 +250,10 @@ class Account extends DataClass implements Insertable<Account> {
     map['balance_centavos'] = Variable<int>(balanceCentavos);
     map['color'] = Variable<String>(color);
     map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || remoteId != null) {
+      map['remote_id'] = Variable<String>(remoteId);
+    }
+    map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
   }
 
@@ -212,6 +265,10 @@ class Account extends DataClass implements Insertable<Account> {
       balanceCentavos: Value(balanceCentavos),
       color: Value(color),
       createdAt: Value(createdAt),
+      remoteId: remoteId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(remoteId),
+      updatedAt: Value(updatedAt),
     );
   }
 
@@ -227,6 +284,8 @@ class Account extends DataClass implements Insertable<Account> {
       balanceCentavos: serializer.fromJson<int>(json['balanceCentavos']),
       color: serializer.fromJson<String>(json['color']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      remoteId: serializer.fromJson<String?>(json['remoteId']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
   }
   @override
@@ -239,6 +298,8 @@ class Account extends DataClass implements Insertable<Account> {
       'balanceCentavos': serializer.toJson<int>(balanceCentavos),
       'color': serializer.toJson<String>(color),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'remoteId': serializer.toJson<String?>(remoteId),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
   }
 
@@ -249,6 +310,8 @@ class Account extends DataClass implements Insertable<Account> {
     int? balanceCentavos,
     String? color,
     DateTime? createdAt,
+    Value<String?> remoteId = const Value.absent(),
+    DateTime? updatedAt,
   }) => Account(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -256,6 +319,8 @@ class Account extends DataClass implements Insertable<Account> {
     balanceCentavos: balanceCentavos ?? this.balanceCentavos,
     color: color ?? this.color,
     createdAt: createdAt ?? this.createdAt,
+    remoteId: remoteId.present ? remoteId.value : this.remoteId,
+    updatedAt: updatedAt ?? this.updatedAt,
   );
   Account copyWithCompanion(AccountsCompanion data) {
     return Account(
@@ -267,6 +332,8 @@ class Account extends DataClass implements Insertable<Account> {
           : this.balanceCentavos,
       color: data.color.present ? data.color.value : this.color,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      remoteId: data.remoteId.present ? data.remoteId.value : this.remoteId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
   }
 
@@ -278,14 +345,24 @@ class Account extends DataClass implements Insertable<Account> {
           ..write('type: $type, ')
           ..write('balanceCentavos: $balanceCentavos, ')
           ..write('color: $color, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('remoteId: $remoteId, ')
+          ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, name, type, balanceCentavos, color, createdAt);
+  int get hashCode => Object.hash(
+    id,
+    name,
+    type,
+    balanceCentavos,
+    color,
+    createdAt,
+    remoteId,
+    updatedAt,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -295,7 +372,9 @@ class Account extends DataClass implements Insertable<Account> {
           other.type == this.type &&
           other.balanceCentavos == this.balanceCentavos &&
           other.color == this.color &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          other.remoteId == this.remoteId &&
+          other.updatedAt == this.updatedAt);
 }
 
 class AccountsCompanion extends UpdateCompanion<Account> {
@@ -305,6 +384,8 @@ class AccountsCompanion extends UpdateCompanion<Account> {
   final Value<int> balanceCentavos;
   final Value<String> color;
   final Value<DateTime> createdAt;
+  final Value<String?> remoteId;
+  final Value<DateTime> updatedAt;
   const AccountsCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
@@ -312,6 +393,8 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     this.balanceCentavos = const Value.absent(),
     this.color = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.remoteId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
   });
   AccountsCompanion.insert({
     this.id = const Value.absent(),
@@ -320,6 +403,8 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     this.balanceCentavos = const Value.absent(),
     required String color,
     this.createdAt = const Value.absent(),
+    this.remoteId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
   }) : name = Value(name),
        type = Value(type),
        color = Value(color);
@@ -330,6 +415,8 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     Expression<int>? balanceCentavos,
     Expression<String>? color,
     Expression<DateTime>? createdAt,
+    Expression<String>? remoteId,
+    Expression<DateTime>? updatedAt,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -338,6 +425,8 @@ class AccountsCompanion extends UpdateCompanion<Account> {
       if (balanceCentavos != null) 'balance_centavos': balanceCentavos,
       if (color != null) 'color': color,
       if (createdAt != null) 'created_at': createdAt,
+      if (remoteId != null) 'remote_id': remoteId,
+      if (updatedAt != null) 'updated_at': updatedAt,
     });
   }
 
@@ -348,6 +437,8 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     Value<int>? balanceCentavos,
     Value<String>? color,
     Value<DateTime>? createdAt,
+    Value<String?>? remoteId,
+    Value<DateTime>? updatedAt,
   }) {
     return AccountsCompanion(
       id: id ?? this.id,
@@ -356,6 +447,8 @@ class AccountsCompanion extends UpdateCompanion<Account> {
       balanceCentavos: balanceCentavos ?? this.balanceCentavos,
       color: color ?? this.color,
       createdAt: createdAt ?? this.createdAt,
+      remoteId: remoteId ?? this.remoteId,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
@@ -380,6 +473,12 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
+    if (remoteId.present) {
+      map['remote_id'] = Variable<String>(remoteId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
     return map;
   }
 
@@ -391,7 +490,9 @@ class AccountsCompanion extends UpdateCompanion<Account> {
           ..write('type: $type, ')
           ..write('balanceCentavos: $balanceCentavos, ')
           ..write('color: $color, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('remoteId: $remoteId, ')
+          ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
   }
@@ -460,6 +561,41 @@ class $CategoriesTable extends Categories
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _remoteIdMeta = const VerificationMeta(
+    'remoteId',
+  );
+  @override
+  late final GeneratedColumn<String> remoteId = GeneratedColumn<String>(
+    'remote_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -467,6 +603,9 @@ class $CategoriesTable extends Categories
     iconCodepoint,
     color,
     isDefault,
+    createdAt,
+    remoteId,
+    updatedAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -516,6 +655,24 @@ class $CategoriesTable extends Categories
         isDefault.isAcceptableOrUnknown(data['is_default']!, _isDefaultMeta),
       );
     }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('remote_id')) {
+      context.handle(
+        _remoteIdMeta,
+        remoteId.isAcceptableOrUnknown(data['remote_id']!, _remoteIdMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
     return context;
   }
 
@@ -545,6 +702,18 @@ class $CategoriesTable extends Categories
         DriftSqlType.bool,
         data['${effectivePrefix}is_default'],
       )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      remoteId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}remote_id'],
+      ),
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
     );
   }
 
@@ -560,12 +729,18 @@ class Category extends DataClass implements Insertable<Category> {
   final int iconCodepoint;
   final String color;
   final bool isDefault;
+  final DateTime createdAt;
+  final String? remoteId;
+  final DateTime updatedAt;
   const Category({
     required this.id,
     required this.name,
     required this.iconCodepoint,
     required this.color,
     required this.isDefault,
+    required this.createdAt,
+    this.remoteId,
+    required this.updatedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -575,6 +750,11 @@ class Category extends DataClass implements Insertable<Category> {
     map['icon_codepoint'] = Variable<int>(iconCodepoint);
     map['color'] = Variable<String>(color);
     map['is_default'] = Variable<bool>(isDefault);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || remoteId != null) {
+      map['remote_id'] = Variable<String>(remoteId);
+    }
+    map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
   }
 
@@ -585,6 +765,11 @@ class Category extends DataClass implements Insertable<Category> {
       iconCodepoint: Value(iconCodepoint),
       color: Value(color),
       isDefault: Value(isDefault),
+      createdAt: Value(createdAt),
+      remoteId: remoteId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(remoteId),
+      updatedAt: Value(updatedAt),
     );
   }
 
@@ -599,6 +784,9 @@ class Category extends DataClass implements Insertable<Category> {
       iconCodepoint: serializer.fromJson<int>(json['iconCodepoint']),
       color: serializer.fromJson<String>(json['color']),
       isDefault: serializer.fromJson<bool>(json['isDefault']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      remoteId: serializer.fromJson<String?>(json['remoteId']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
   }
   @override
@@ -610,6 +798,9 @@ class Category extends DataClass implements Insertable<Category> {
       'iconCodepoint': serializer.toJson<int>(iconCodepoint),
       'color': serializer.toJson<String>(color),
       'isDefault': serializer.toJson<bool>(isDefault),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'remoteId': serializer.toJson<String?>(remoteId),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
   }
 
@@ -619,12 +810,18 @@ class Category extends DataClass implements Insertable<Category> {
     int? iconCodepoint,
     String? color,
     bool? isDefault,
+    DateTime? createdAt,
+    Value<String?> remoteId = const Value.absent(),
+    DateTime? updatedAt,
   }) => Category(
     id: id ?? this.id,
     name: name ?? this.name,
     iconCodepoint: iconCodepoint ?? this.iconCodepoint,
     color: color ?? this.color,
     isDefault: isDefault ?? this.isDefault,
+    createdAt: createdAt ?? this.createdAt,
+    remoteId: remoteId.present ? remoteId.value : this.remoteId,
+    updatedAt: updatedAt ?? this.updatedAt,
   );
   Category copyWithCompanion(CategoriesCompanion data) {
     return Category(
@@ -635,6 +832,9 @@ class Category extends DataClass implements Insertable<Category> {
           : this.iconCodepoint,
       color: data.color.present ? data.color.value : this.color,
       isDefault: data.isDefault.present ? data.isDefault.value : this.isDefault,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      remoteId: data.remoteId.present ? data.remoteId.value : this.remoteId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
   }
 
@@ -645,13 +845,25 @@ class Category extends DataClass implements Insertable<Category> {
           ..write('name: $name, ')
           ..write('iconCodepoint: $iconCodepoint, ')
           ..write('color: $color, ')
-          ..write('isDefault: $isDefault')
+          ..write('isDefault: $isDefault, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('remoteId: $remoteId, ')
+          ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, name, iconCodepoint, color, isDefault);
+  int get hashCode => Object.hash(
+    id,
+    name,
+    iconCodepoint,
+    color,
+    isDefault,
+    createdAt,
+    remoteId,
+    updatedAt,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -660,7 +872,10 @@ class Category extends DataClass implements Insertable<Category> {
           other.name == this.name &&
           other.iconCodepoint == this.iconCodepoint &&
           other.color == this.color &&
-          other.isDefault == this.isDefault);
+          other.isDefault == this.isDefault &&
+          other.createdAt == this.createdAt &&
+          other.remoteId == this.remoteId &&
+          other.updatedAt == this.updatedAt);
 }
 
 class CategoriesCompanion extends UpdateCompanion<Category> {
@@ -669,12 +884,18 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
   final Value<int> iconCodepoint;
   final Value<String> color;
   final Value<bool> isDefault;
+  final Value<DateTime> createdAt;
+  final Value<String?> remoteId;
+  final Value<DateTime> updatedAt;
   const CategoriesCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
     this.iconCodepoint = const Value.absent(),
     this.color = const Value.absent(),
     this.isDefault = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.remoteId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
   });
   CategoriesCompanion.insert({
     this.id = const Value.absent(),
@@ -682,6 +903,9 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     required int iconCodepoint,
     required String color,
     this.isDefault = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.remoteId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
   }) : name = Value(name),
        iconCodepoint = Value(iconCodepoint),
        color = Value(color);
@@ -691,6 +915,9 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     Expression<int>? iconCodepoint,
     Expression<String>? color,
     Expression<bool>? isDefault,
+    Expression<DateTime>? createdAt,
+    Expression<String>? remoteId,
+    Expression<DateTime>? updatedAt,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -698,6 +925,9 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
       if (iconCodepoint != null) 'icon_codepoint': iconCodepoint,
       if (color != null) 'color': color,
       if (isDefault != null) 'is_default': isDefault,
+      if (createdAt != null) 'created_at': createdAt,
+      if (remoteId != null) 'remote_id': remoteId,
+      if (updatedAt != null) 'updated_at': updatedAt,
     });
   }
 
@@ -707,6 +937,9 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     Value<int>? iconCodepoint,
     Value<String>? color,
     Value<bool>? isDefault,
+    Value<DateTime>? createdAt,
+    Value<String?>? remoteId,
+    Value<DateTime>? updatedAt,
   }) {
     return CategoriesCompanion(
       id: id ?? this.id,
@@ -714,6 +947,9 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
       iconCodepoint: iconCodepoint ?? this.iconCodepoint,
       color: color ?? this.color,
       isDefault: isDefault ?? this.isDefault,
+      createdAt: createdAt ?? this.createdAt,
+      remoteId: remoteId ?? this.remoteId,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
@@ -735,6 +971,15 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     if (isDefault.present) {
       map['is_default'] = Variable<bool>(isDefault.value);
     }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (remoteId.present) {
+      map['remote_id'] = Variable<String>(remoteId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
     return map;
   }
 
@@ -745,7 +990,10 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
           ..write('name: $name, ')
           ..write('iconCodepoint: $iconCodepoint, ')
           ..write('color: $color, ')
-          ..write('isDefault: $isDefault')
+          ..write('isDefault: $isDefault, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('remoteId: $remoteId, ')
+          ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
   }
@@ -826,6 +1074,29 @@ class $ReceiptsTable extends Receipts with TableInfo<$ReceiptsTable, Receipt> {
     requiredDuringInsert: false,
     defaultValue: currentDateAndTime,
   );
+  static const VerificationMeta _remoteIdMeta = const VerificationMeta(
+    'remoteId',
+  );
+  @override
+  late final GeneratedColumn<String> remoteId = GeneratedColumn<String>(
+    'remote_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -834,6 +1105,8 @@ class $ReceiptsTable extends Receipts with TableInfo<$ReceiptsTable, Receipt> {
     extractedAmountCentavos,
     extractedMerchant,
     createdAt,
+    remoteId,
+    updatedAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -891,6 +1164,18 @@ class $ReceiptsTable extends Receipts with TableInfo<$ReceiptsTable, Receipt> {
         createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
       );
     }
+    if (data.containsKey('remote_id')) {
+      context.handle(
+        _remoteIdMeta,
+        remoteId.isAcceptableOrUnknown(data['remote_id']!, _remoteIdMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
     return context;
   }
 
@@ -924,6 +1209,14 @@ class $ReceiptsTable extends Receipts with TableInfo<$ReceiptsTable, Receipt> {
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
       )!,
+      remoteId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}remote_id'],
+      ),
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
     );
   }
 
@@ -940,6 +1233,8 @@ class Receipt extends DataClass implements Insertable<Receipt> {
   final int? extractedAmountCentavos;
   final String? extractedMerchant;
   final DateTime createdAt;
+  final String? remoteId;
+  final DateTime updatedAt;
   const Receipt({
     required this.id,
     required this.imagePath,
@@ -947,6 +1242,8 @@ class Receipt extends DataClass implements Insertable<Receipt> {
     this.extractedAmountCentavos,
     this.extractedMerchant,
     required this.createdAt,
+    this.remoteId,
+    required this.updatedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -963,6 +1260,10 @@ class Receipt extends DataClass implements Insertable<Receipt> {
       map['extracted_merchant'] = Variable<String>(extractedMerchant);
     }
     map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || remoteId != null) {
+      map['remote_id'] = Variable<String>(remoteId);
+    }
+    map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
   }
 
@@ -980,6 +1281,10 @@ class Receipt extends DataClass implements Insertable<Receipt> {
           ? const Value.absent()
           : Value(extractedMerchant),
       createdAt: Value(createdAt),
+      remoteId: remoteId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(remoteId),
+      updatedAt: Value(updatedAt),
     );
   }
 
@@ -999,6 +1304,8 @@ class Receipt extends DataClass implements Insertable<Receipt> {
         json['extractedMerchant'],
       ),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      remoteId: serializer.fromJson<String?>(json['remoteId']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
   }
   @override
@@ -1013,6 +1320,8 @@ class Receipt extends DataClass implements Insertable<Receipt> {
       ),
       'extractedMerchant': serializer.toJson<String?>(extractedMerchant),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'remoteId': serializer.toJson<String?>(remoteId),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
   }
 
@@ -1023,6 +1332,8 @@ class Receipt extends DataClass implements Insertable<Receipt> {
     Value<int?> extractedAmountCentavos = const Value.absent(),
     Value<String?> extractedMerchant = const Value.absent(),
     DateTime? createdAt,
+    Value<String?> remoteId = const Value.absent(),
+    DateTime? updatedAt,
   }) => Receipt(
     id: id ?? this.id,
     imagePath: imagePath ?? this.imagePath,
@@ -1036,6 +1347,8 @@ class Receipt extends DataClass implements Insertable<Receipt> {
         ? extractedMerchant.value
         : this.extractedMerchant,
     createdAt: createdAt ?? this.createdAt,
+    remoteId: remoteId.present ? remoteId.value : this.remoteId,
+    updatedAt: updatedAt ?? this.updatedAt,
   );
   Receipt copyWithCompanion(ReceiptsCompanion data) {
     return Receipt(
@@ -1051,6 +1364,8 @@ class Receipt extends DataClass implements Insertable<Receipt> {
           ? data.extractedMerchant.value
           : this.extractedMerchant,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      remoteId: data.remoteId.present ? data.remoteId.value : this.remoteId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
   }
 
@@ -1062,7 +1377,9 @@ class Receipt extends DataClass implements Insertable<Receipt> {
           ..write('aiRawResponse: $aiRawResponse, ')
           ..write('extractedAmountCentavos: $extractedAmountCentavos, ')
           ..write('extractedMerchant: $extractedMerchant, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('remoteId: $remoteId, ')
+          ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
   }
@@ -1075,6 +1392,8 @@ class Receipt extends DataClass implements Insertable<Receipt> {
     extractedAmountCentavos,
     extractedMerchant,
     createdAt,
+    remoteId,
+    updatedAt,
   );
   @override
   bool operator ==(Object other) =>
@@ -1085,7 +1404,9 @@ class Receipt extends DataClass implements Insertable<Receipt> {
           other.aiRawResponse == this.aiRawResponse &&
           other.extractedAmountCentavos == this.extractedAmountCentavos &&
           other.extractedMerchant == this.extractedMerchant &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          other.remoteId == this.remoteId &&
+          other.updatedAt == this.updatedAt);
 }
 
 class ReceiptsCompanion extends UpdateCompanion<Receipt> {
@@ -1095,6 +1416,8 @@ class ReceiptsCompanion extends UpdateCompanion<Receipt> {
   final Value<int?> extractedAmountCentavos;
   final Value<String?> extractedMerchant;
   final Value<DateTime> createdAt;
+  final Value<String?> remoteId;
+  final Value<DateTime> updatedAt;
   const ReceiptsCompanion({
     this.id = const Value.absent(),
     this.imagePath = const Value.absent(),
@@ -1102,6 +1425,8 @@ class ReceiptsCompanion extends UpdateCompanion<Receipt> {
     this.extractedAmountCentavos = const Value.absent(),
     this.extractedMerchant = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.remoteId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
   });
   ReceiptsCompanion.insert({
     this.id = const Value.absent(),
@@ -1110,6 +1435,8 @@ class ReceiptsCompanion extends UpdateCompanion<Receipt> {
     this.extractedAmountCentavos = const Value.absent(),
     this.extractedMerchant = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.remoteId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
   }) : imagePath = Value(imagePath);
   static Insertable<Receipt> custom({
     Expression<int>? id,
@@ -1118,6 +1445,8 @@ class ReceiptsCompanion extends UpdateCompanion<Receipt> {
     Expression<int>? extractedAmountCentavos,
     Expression<String>? extractedMerchant,
     Expression<DateTime>? createdAt,
+    Expression<String>? remoteId,
+    Expression<DateTime>? updatedAt,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1127,6 +1456,8 @@ class ReceiptsCompanion extends UpdateCompanion<Receipt> {
         'extracted_amount_centavos': extractedAmountCentavos,
       if (extractedMerchant != null) 'extracted_merchant': extractedMerchant,
       if (createdAt != null) 'created_at': createdAt,
+      if (remoteId != null) 'remote_id': remoteId,
+      if (updatedAt != null) 'updated_at': updatedAt,
     });
   }
 
@@ -1137,6 +1468,8 @@ class ReceiptsCompanion extends UpdateCompanion<Receipt> {
     Value<int?>? extractedAmountCentavos,
     Value<String?>? extractedMerchant,
     Value<DateTime>? createdAt,
+    Value<String?>? remoteId,
+    Value<DateTime>? updatedAt,
   }) {
     return ReceiptsCompanion(
       id: id ?? this.id,
@@ -1146,6 +1479,8 @@ class ReceiptsCompanion extends UpdateCompanion<Receipt> {
           extractedAmountCentavos ?? this.extractedAmountCentavos,
       extractedMerchant: extractedMerchant ?? this.extractedMerchant,
       createdAt: createdAt ?? this.createdAt,
+      remoteId: remoteId ?? this.remoteId,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
@@ -1172,6 +1507,12 @@ class ReceiptsCompanion extends UpdateCompanion<Receipt> {
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
+    if (remoteId.present) {
+      map['remote_id'] = Variable<String>(remoteId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
     return map;
   }
 
@@ -1183,7 +1524,9 @@ class ReceiptsCompanion extends UpdateCompanion<Receipt> {
           ..write('aiRawResponse: $aiRawResponse, ')
           ..write('extractedAmountCentavos: $extractedAmountCentavos, ')
           ..write('extractedMerchant: $extractedMerchant, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('remoteId: $remoteId, ')
+          ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
   }
@@ -1292,6 +1635,29 @@ class $ExpensesTable extends Expenses with TableInfo<$ExpensesTable, Expense> {
     requiredDuringInsert: false,
     defaultValue: currentDateAndTime,
   );
+  static const VerificationMeta _remoteIdMeta = const VerificationMeta(
+    'remoteId',
+  );
+  @override
+  late final GeneratedColumn<String> remoteId = GeneratedColumn<String>(
+    'remote_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -1302,6 +1668,8 @@ class $ExpensesTable extends Expenses with TableInfo<$ExpensesTable, Expense> {
     accountId,
     receiptId,
     createdAt,
+    remoteId,
+    updatedAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1376,6 +1744,18 @@ class $ExpensesTable extends Expenses with TableInfo<$ExpensesTable, Expense> {
         createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
       );
     }
+    if (data.containsKey('remote_id')) {
+      context.handle(
+        _remoteIdMeta,
+        remoteId.isAcceptableOrUnknown(data['remote_id']!, _remoteIdMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
     return context;
   }
 
@@ -1417,6 +1797,14 @@ class $ExpensesTable extends Expenses with TableInfo<$ExpensesTable, Expense> {
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
       )!,
+      remoteId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}remote_id'],
+      ),
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
     );
   }
 
@@ -1435,6 +1823,8 @@ class Expense extends DataClass implements Insertable<Expense> {
   final int accountId;
   final int? receiptId;
   final DateTime createdAt;
+  final String? remoteId;
+  final DateTime updatedAt;
   const Expense({
     required this.id,
     required this.amountCentavos,
@@ -1444,6 +1834,8 @@ class Expense extends DataClass implements Insertable<Expense> {
     required this.accountId,
     this.receiptId,
     required this.createdAt,
+    this.remoteId,
+    required this.updatedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1458,6 +1850,10 @@ class Expense extends DataClass implements Insertable<Expense> {
       map['receipt_id'] = Variable<int>(receiptId);
     }
     map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || remoteId != null) {
+      map['remote_id'] = Variable<String>(remoteId);
+    }
+    map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
   }
 
@@ -1473,6 +1869,10 @@ class Expense extends DataClass implements Insertable<Expense> {
           ? const Value.absent()
           : Value(receiptId),
       createdAt: Value(createdAt),
+      remoteId: remoteId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(remoteId),
+      updatedAt: Value(updatedAt),
     );
   }
 
@@ -1490,6 +1890,8 @@ class Expense extends DataClass implements Insertable<Expense> {
       accountId: serializer.fromJson<int>(json['accountId']),
       receiptId: serializer.fromJson<int?>(json['receiptId']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      remoteId: serializer.fromJson<String?>(json['remoteId']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
   }
   @override
@@ -1504,6 +1906,8 @@ class Expense extends DataClass implements Insertable<Expense> {
       'accountId': serializer.toJson<int>(accountId),
       'receiptId': serializer.toJson<int?>(receiptId),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'remoteId': serializer.toJson<String?>(remoteId),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
   }
 
@@ -1516,6 +1920,8 @@ class Expense extends DataClass implements Insertable<Expense> {
     int? accountId,
     Value<int?> receiptId = const Value.absent(),
     DateTime? createdAt,
+    Value<String?> remoteId = const Value.absent(),
+    DateTime? updatedAt,
   }) => Expense(
     id: id ?? this.id,
     amountCentavos: amountCentavos ?? this.amountCentavos,
@@ -1525,6 +1931,8 @@ class Expense extends DataClass implements Insertable<Expense> {
     accountId: accountId ?? this.accountId,
     receiptId: receiptId.present ? receiptId.value : this.receiptId,
     createdAt: createdAt ?? this.createdAt,
+    remoteId: remoteId.present ? remoteId.value : this.remoteId,
+    updatedAt: updatedAt ?? this.updatedAt,
   );
   Expense copyWithCompanion(ExpensesCompanion data) {
     return Expense(
@@ -1542,6 +1950,8 @@ class Expense extends DataClass implements Insertable<Expense> {
       accountId: data.accountId.present ? data.accountId.value : this.accountId,
       receiptId: data.receiptId.present ? data.receiptId.value : this.receiptId,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      remoteId: data.remoteId.present ? data.remoteId.value : this.remoteId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
   }
 
@@ -1555,7 +1965,9 @@ class Expense extends DataClass implements Insertable<Expense> {
           ..write('categoryId: $categoryId, ')
           ..write('accountId: $accountId, ')
           ..write('receiptId: $receiptId, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('remoteId: $remoteId, ')
+          ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
   }
@@ -1570,6 +1982,8 @@ class Expense extends DataClass implements Insertable<Expense> {
     accountId,
     receiptId,
     createdAt,
+    remoteId,
+    updatedAt,
   );
   @override
   bool operator ==(Object other) =>
@@ -1582,7 +1996,9 @@ class Expense extends DataClass implements Insertable<Expense> {
           other.categoryId == this.categoryId &&
           other.accountId == this.accountId &&
           other.receiptId == this.receiptId &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          other.remoteId == this.remoteId &&
+          other.updatedAt == this.updatedAt);
 }
 
 class ExpensesCompanion extends UpdateCompanion<Expense> {
@@ -1594,6 +2010,8 @@ class ExpensesCompanion extends UpdateCompanion<Expense> {
   final Value<int> accountId;
   final Value<int?> receiptId;
   final Value<DateTime> createdAt;
+  final Value<String?> remoteId;
+  final Value<DateTime> updatedAt;
   const ExpensesCompanion({
     this.id = const Value.absent(),
     this.amountCentavos = const Value.absent(),
@@ -1603,6 +2021,8 @@ class ExpensesCompanion extends UpdateCompanion<Expense> {
     this.accountId = const Value.absent(),
     this.receiptId = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.remoteId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
   });
   ExpensesCompanion.insert({
     this.id = const Value.absent(),
@@ -1613,6 +2033,8 @@ class ExpensesCompanion extends UpdateCompanion<Expense> {
     required int accountId,
     this.receiptId = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.remoteId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
   }) : amountCentavos = Value(amountCentavos),
        description = Value(description),
        date = Value(date),
@@ -1627,6 +2049,8 @@ class ExpensesCompanion extends UpdateCompanion<Expense> {
     Expression<int>? accountId,
     Expression<int>? receiptId,
     Expression<DateTime>? createdAt,
+    Expression<String>? remoteId,
+    Expression<DateTime>? updatedAt,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1637,6 +2061,8 @@ class ExpensesCompanion extends UpdateCompanion<Expense> {
       if (accountId != null) 'account_id': accountId,
       if (receiptId != null) 'receipt_id': receiptId,
       if (createdAt != null) 'created_at': createdAt,
+      if (remoteId != null) 'remote_id': remoteId,
+      if (updatedAt != null) 'updated_at': updatedAt,
     });
   }
 
@@ -1649,6 +2075,8 @@ class ExpensesCompanion extends UpdateCompanion<Expense> {
     Value<int>? accountId,
     Value<int?>? receiptId,
     Value<DateTime>? createdAt,
+    Value<String?>? remoteId,
+    Value<DateTime>? updatedAt,
   }) {
     return ExpensesCompanion(
       id: id ?? this.id,
@@ -1659,6 +2087,8 @@ class ExpensesCompanion extends UpdateCompanion<Expense> {
       accountId: accountId ?? this.accountId,
       receiptId: receiptId ?? this.receiptId,
       createdAt: createdAt ?? this.createdAt,
+      remoteId: remoteId ?? this.remoteId,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
@@ -1689,6 +2119,12 @@ class ExpensesCompanion extends UpdateCompanion<Expense> {
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
+    if (remoteId.present) {
+      map['remote_id'] = Variable<String>(remoteId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
     return map;
   }
 
@@ -1702,7 +2138,9 @@ class ExpensesCompanion extends UpdateCompanion<Expense> {
           ..write('categoryId: $categoryId, ')
           ..write('accountId: $accountId, ')
           ..write('receiptId: $receiptId, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('remoteId: $remoteId, ')
+          ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
   }
@@ -2352,6 +2790,8 @@ typedef $$AccountsTableCreateCompanionBuilder =
       Value<int> balanceCentavos,
       required String color,
       Value<DateTime> createdAt,
+      Value<String?> remoteId,
+      Value<DateTime> updatedAt,
     });
 typedef $$AccountsTableUpdateCompanionBuilder =
     AccountsCompanion Function({
@@ -2361,6 +2801,8 @@ typedef $$AccountsTableUpdateCompanionBuilder =
       Value<int> balanceCentavos,
       Value<String> color,
       Value<DateTime> createdAt,
+      Value<String?> remoteId,
+      Value<DateTime> updatedAt,
     });
 
 final class $$AccountsTableReferences
@@ -2423,6 +2865,16 @@ class $$AccountsTableFilterComposer
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get remoteId => $composableBuilder(
+    column: $table.remoteId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2490,6 +2942,16 @@ class $$AccountsTableOrderingComposer
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get remoteId => $composableBuilder(
+    column: $table.remoteId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$AccountsTableAnnotationComposer
@@ -2520,6 +2982,12 @@ class $$AccountsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get remoteId =>
+      $composableBuilder(column: $table.remoteId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
 
   Expression<T> expensesRefs<T extends Object>(
     Expression<T> Function($$ExpensesTableAnnotationComposer a) f,
@@ -2581,6 +3049,8 @@ class $$AccountsTableTableManager
                 Value<int> balanceCentavos = const Value.absent(),
                 Value<String> color = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<String?> remoteId = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
               }) => AccountsCompanion(
                 id: id,
                 name: name,
@@ -2588,6 +3058,8 @@ class $$AccountsTableTableManager
                 balanceCentavos: balanceCentavos,
                 color: color,
                 createdAt: createdAt,
+                remoteId: remoteId,
+                updatedAt: updatedAt,
               ),
           createCompanionCallback:
               ({
@@ -2597,6 +3069,8 @@ class $$AccountsTableTableManager
                 Value<int> balanceCentavos = const Value.absent(),
                 required String color,
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<String?> remoteId = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
               }) => AccountsCompanion.insert(
                 id: id,
                 name: name,
@@ -2604,6 +3078,8 @@ class $$AccountsTableTableManager
                 balanceCentavos: balanceCentavos,
                 color: color,
                 createdAt: createdAt,
+                remoteId: remoteId,
+                updatedAt: updatedAt,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -2660,6 +3136,9 @@ typedef $$CategoriesTableCreateCompanionBuilder =
       required int iconCodepoint,
       required String color,
       Value<bool> isDefault,
+      Value<DateTime> createdAt,
+      Value<String?> remoteId,
+      Value<DateTime> updatedAt,
     });
 typedef $$CategoriesTableUpdateCompanionBuilder =
     CategoriesCompanion Function({
@@ -2668,6 +3147,9 @@ typedef $$CategoriesTableUpdateCompanionBuilder =
       Value<int> iconCodepoint,
       Value<String> color,
       Value<bool> isDefault,
+      Value<DateTime> createdAt,
+      Value<String?> remoteId,
+      Value<DateTime> updatedAt,
     });
 
 final class $$CategoriesTableReferences
@@ -2725,6 +3207,21 @@ class $$CategoriesTableFilterComposer
 
   ColumnFilters<bool> get isDefault => $composableBuilder(
     column: $table.isDefault,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get remoteId => $composableBuilder(
+    column: $table.remoteId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2787,6 +3284,21 @@ class $$CategoriesTableOrderingComposer
     column: $table.isDefault,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get remoteId => $composableBuilder(
+    column: $table.remoteId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$CategoriesTableAnnotationComposer
@@ -2814,6 +3326,15 @@ class $$CategoriesTableAnnotationComposer
 
   GeneratedColumn<bool> get isDefault =>
       $composableBuilder(column: $table.isDefault, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get remoteId =>
+      $composableBuilder(column: $table.remoteId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
 
   Expression<T> expensesRefs<T extends Object>(
     Expression<T> Function($$ExpensesTableAnnotationComposer a) f,
@@ -2874,12 +3395,18 @@ class $$CategoriesTableTableManager
                 Value<int> iconCodepoint = const Value.absent(),
                 Value<String> color = const Value.absent(),
                 Value<bool> isDefault = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<String?> remoteId = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
               }) => CategoriesCompanion(
                 id: id,
                 name: name,
                 iconCodepoint: iconCodepoint,
                 color: color,
                 isDefault: isDefault,
+                createdAt: createdAt,
+                remoteId: remoteId,
+                updatedAt: updatedAt,
               ),
           createCompanionCallback:
               ({
@@ -2888,12 +3415,18 @@ class $$CategoriesTableTableManager
                 required int iconCodepoint,
                 required String color,
                 Value<bool> isDefault = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<String?> remoteId = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
               }) => CategoriesCompanion.insert(
                 id: id,
                 name: name,
                 iconCodepoint: iconCodepoint,
                 color: color,
                 isDefault: isDefault,
+                createdAt: createdAt,
+                remoteId: remoteId,
+                updatedAt: updatedAt,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -2959,6 +3492,8 @@ typedef $$ReceiptsTableCreateCompanionBuilder =
       Value<int?> extractedAmountCentavos,
       Value<String?> extractedMerchant,
       Value<DateTime> createdAt,
+      Value<String?> remoteId,
+      Value<DateTime> updatedAt,
     });
 typedef $$ReceiptsTableUpdateCompanionBuilder =
     ReceiptsCompanion Function({
@@ -2968,6 +3503,8 @@ typedef $$ReceiptsTableUpdateCompanionBuilder =
       Value<int?> extractedAmountCentavos,
       Value<String?> extractedMerchant,
       Value<DateTime> createdAt,
+      Value<String?> remoteId,
+      Value<DateTime> updatedAt,
     });
 
 final class $$ReceiptsTableReferences
@@ -3030,6 +3567,16 @@ class $$ReceiptsTableFilterComposer
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get remoteId => $composableBuilder(
+    column: $table.remoteId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3097,6 +3644,16 @@ class $$ReceiptsTableOrderingComposer
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get remoteId => $composableBuilder(
+    column: $table.remoteId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ReceiptsTableAnnotationComposer
@@ -3131,6 +3688,12 @@ class $$ReceiptsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get remoteId =>
+      $composableBuilder(column: $table.remoteId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
 
   Expression<T> expensesRefs<T extends Object>(
     Expression<T> Function($$ExpensesTableAnnotationComposer a) f,
@@ -3192,6 +3755,8 @@ class $$ReceiptsTableTableManager
                 Value<int?> extractedAmountCentavos = const Value.absent(),
                 Value<String?> extractedMerchant = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<String?> remoteId = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
               }) => ReceiptsCompanion(
                 id: id,
                 imagePath: imagePath,
@@ -3199,6 +3764,8 @@ class $$ReceiptsTableTableManager
                 extractedAmountCentavos: extractedAmountCentavos,
                 extractedMerchant: extractedMerchant,
                 createdAt: createdAt,
+                remoteId: remoteId,
+                updatedAt: updatedAt,
               ),
           createCompanionCallback:
               ({
@@ -3208,6 +3775,8 @@ class $$ReceiptsTableTableManager
                 Value<int?> extractedAmountCentavos = const Value.absent(),
                 Value<String?> extractedMerchant = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<String?> remoteId = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
               }) => ReceiptsCompanion.insert(
                 id: id,
                 imagePath: imagePath,
@@ -3215,6 +3784,8 @@ class $$ReceiptsTableTableManager
                 extractedAmountCentavos: extractedAmountCentavos,
                 extractedMerchant: extractedMerchant,
                 createdAt: createdAt,
+                remoteId: remoteId,
+                updatedAt: updatedAt,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -3274,6 +3845,8 @@ typedef $$ExpensesTableCreateCompanionBuilder =
       required int accountId,
       Value<int?> receiptId,
       Value<DateTime> createdAt,
+      Value<String?> remoteId,
+      Value<DateTime> updatedAt,
     });
 typedef $$ExpensesTableUpdateCompanionBuilder =
     ExpensesCompanion Function({
@@ -3285,6 +3858,8 @@ typedef $$ExpensesTableUpdateCompanionBuilder =
       Value<int> accountId,
       Value<int?> receiptId,
       Value<DateTime> createdAt,
+      Value<String?> remoteId,
+      Value<DateTime> updatedAt,
     });
 
 final class $$ExpensesTableReferences
@@ -3376,6 +3951,16 @@ class $$ExpensesTableFilterComposer
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get remoteId => $composableBuilder(
+    column: $table.remoteId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3483,6 +4068,16 @@ class $$ExpensesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get remoteId => $composableBuilder(
+    column: $table.remoteId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$CategoriesTableOrderingComposer get categoryId {
     final $$CategoriesTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -3580,6 +4175,12 @@ class $$ExpensesTableAnnotationComposer
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get remoteId =>
+      $composableBuilder(column: $table.remoteId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
 
   $$CategoriesTableAnnotationComposer get categoryId {
     final $$CategoriesTableAnnotationComposer composer = $composerBuilder(
@@ -3691,6 +4292,8 @@ class $$ExpensesTableTableManager
                 Value<int> accountId = const Value.absent(),
                 Value<int?> receiptId = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<String?> remoteId = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
               }) => ExpensesCompanion(
                 id: id,
                 amountCentavos: amountCentavos,
@@ -3700,6 +4303,8 @@ class $$ExpensesTableTableManager
                 accountId: accountId,
                 receiptId: receiptId,
                 createdAt: createdAt,
+                remoteId: remoteId,
+                updatedAt: updatedAt,
               ),
           createCompanionCallback:
               ({
@@ -3711,6 +4316,8 @@ class $$ExpensesTableTableManager
                 required int accountId,
                 Value<int?> receiptId = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<String?> remoteId = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
               }) => ExpensesCompanion.insert(
                 id: id,
                 amountCentavos: amountCentavos,
@@ -3720,6 +4327,8 @@ class $$ExpensesTableTableManager
                 accountId: accountId,
                 receiptId: receiptId,
                 createdAt: createdAt,
+                remoteId: remoteId,
+                updatedAt: updatedAt,
               ),
           withReferenceMapper: (p0) => p0
               .map(

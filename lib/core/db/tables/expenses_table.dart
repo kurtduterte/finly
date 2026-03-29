@@ -13,4 +13,6 @@ class Expenses extends Table {
   IntColumn get receiptId =>
       integer().nullable().references(Receipts, #id)();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  TextColumn get remoteId => text().nullable()();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 }

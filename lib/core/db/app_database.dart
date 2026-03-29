@@ -37,7 +37,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(driftDatabase(name: 'finly_db'));
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -53,6 +53,17 @@ class AppDatabase extends _$AppDatabase {
       if (from < 2) {
         await m.createTable(conversations);
         await m.createTable(chatMessages);
+      }
+      if (from < 3) {
+        await m.addColumn(expenses, expenses.remoteId);
+        await m.addColumn(expenses, expenses.updatedAt);
+        await m.addColumn(accounts, accounts.remoteId);
+        await m.addColumn(accounts, accounts.updatedAt);
+        await m.addColumn(categories, categories.remoteId);
+        await m.addColumn(categories, categories.updatedAt);
+        await m.addColumn(categories, categories.createdAt);
+        await m.addColumn(receipts, receipts.remoteId);
+        await m.addColumn(receipts, receipts.updatedAt);
       }
     },
   );

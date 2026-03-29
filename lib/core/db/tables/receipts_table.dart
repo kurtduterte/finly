@@ -7,4 +7,6 @@ class Receipts extends Table {
   IntColumn get extractedAmountCentavos => integer().nullable()();
   TextColumn get extractedMerchant => text().nullable()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  TextColumn get remoteId => text().nullable()();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 }
