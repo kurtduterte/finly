@@ -7,13 +7,13 @@
 
 # Smart run targets — pub get only runs when dependencies changed
 run: .pub-cache-stamp
-	flutter run
+	flutter run --dart-define-from-file=.env.json
 
 run-android: .pub-cache-stamp
-	flutter run -d android
+	flutter run -d android --dart-define-from-file=.env.json
 
 run-web: .pub-cache-stamp
-	flutter run -d chrome
+	flutter run -d chrome --dart-define-from-file=.env.json
 
 # Bootstrap dev environment (run once after cloning)
 setup:

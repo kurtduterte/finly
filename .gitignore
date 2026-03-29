@@ -55,3 +55,7 @@ assets/models/
 
 # Make build sentinel
 .pub-cache-stamp
+
+# Firebase secrets — copy from .env.json.example and fill in values
+.env.json
+android/app/google-services.json

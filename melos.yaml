@@ -57,15 +57,15 @@ scripts:
   # Build
   # ---------------------------------------------------------------------------
   build:apk:
-    run: flutter build apk --release
+    run: flutter build apk --release --dart-define-from-file=.env.json
     description: Build release APK
 
   build:appbundle:
-    run: flutter build appbundle --release
+    run: flutter build appbundle --release --dart-define-from-file=.env.json
     description: Build release AAB for Play Store
 
   build:ios:
-    run: flutter build ipa --release
+    run: flutter build ipa --release --dart-define-from-file=.env.json
     description: Build release IPA for App Store
 
   # ---------------------------------------------------------------------------

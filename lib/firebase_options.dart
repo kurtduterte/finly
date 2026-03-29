@@ -41,48 +41,48 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'REDACTED_WEB_API_KEY',
-    appId: '1:758004605511:web:6f9a29716370b559d60762',
-    messagingSenderId: '758004605511',
-    projectId: 'finly-23c1f',
-    authDomain: 'finly-23c1f.firebaseapp.com',
-    storageBucket: 'finly-23c1f.firebasestorage.app',
-    measurementId: 'G-BW5DM1F684',
+    apiKey: String.fromEnvironment('FIREBASE_WEB_API_KEY'),
+    appId: String.fromEnvironment('FIREBASE_WEB_APP_ID'),
+    messagingSenderId: String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID'),
+    projectId: String.fromEnvironment('FIREBASE_PROJECT_ID'),
+    authDomain: String.fromEnvironment('FIREBASE_AUTH_DOMAIN'),
+    storageBucket: String.fromEnvironment('FIREBASE_STORAGE_BUCKET'),
+    measurementId: String.fromEnvironment('FIREBASE_WEB_MEASUREMENT_ID'),
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'REDACTED_ANDROID_API_KEY',
-    appId: '1:758004605511:android:b208b8db487f35e9d60762',
-    messagingSenderId: '758004605511',
-    projectId: 'finly-23c1f',
-    storageBucket: 'finly-23c1f.firebasestorage.app',
+    apiKey: String.fromEnvironment('FIREBASE_ANDROID_API_KEY'),
+    appId: String.fromEnvironment('FIREBASE_ANDROID_APP_ID'),
+    messagingSenderId: String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID'),
+    projectId: String.fromEnvironment('FIREBASE_PROJECT_ID'),
+    storageBucket: String.fromEnvironment('FIREBASE_STORAGE_BUCKET'),
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'REDACTED_IOS_API_KEY',
-    appId: '1:758004605511:ios:fb7062495bbb16aad60762',
-    messagingSenderId: '758004605511',
-    projectId: 'finly-23c1f',
-    storageBucket: 'finly-23c1f.firebasestorage.app',
-    iosBundleId: 'com.example.finly',
+    apiKey: String.fromEnvironment('FIREBASE_IOS_API_KEY'),
+    appId: String.fromEnvironment('FIREBASE_IOS_APP_ID'),
+    messagingSenderId: String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID'),
+    projectId: String.fromEnvironment('FIREBASE_PROJECT_ID'),
+    storageBucket: String.fromEnvironment('FIREBASE_STORAGE_BUCKET'),
+    iosBundleId: String.fromEnvironment('FIREBASE_IOS_BUNDLE_ID'),
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'REDACTED_IOS_API_KEY',
-    appId: '1:758004605511:ios:fb7062495bbb16aad60762',
-    messagingSenderId: '758004605511',
-    projectId: 'finly-23c1f',
-    storageBucket: 'finly-23c1f.firebasestorage.app',
-    iosBundleId: 'com.example.finly',
+    apiKey: String.fromEnvironment('FIREBASE_IOS_API_KEY'),
+    appId: String.fromEnvironment('FIREBASE_IOS_APP_ID'),
+    messagingSenderId: String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID'),
+    projectId: String.fromEnvironment('FIREBASE_PROJECT_ID'),
+    storageBucket: String.fromEnvironment('FIREBASE_STORAGE_BUCKET'),
+    iosBundleId: String.fromEnvironment('FIREBASE_IOS_BUNDLE_ID'),
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'REDACTED_WEB_API_KEY',
-    appId: '1:758004605511:web:d059ad4c611bf296d60762',
-    messagingSenderId: '758004605511',
-    projectId: 'finly-23c1f',
-    authDomain: 'finly-23c1f.firebaseapp.com',
-    storageBucket: 'finly-23c1f.firebasestorage.app',
-    measurementId: 'G-MRS3VMJPCK',
+    apiKey: String.fromEnvironment('FIREBASE_WEB_API_KEY'),
+    appId: String.fromEnvironment('FIREBASE_WINDOWS_APP_ID'),
+    messagingSenderId: String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID'),
+    projectId: String.fromEnvironment('FIREBASE_PROJECT_ID'),
+    authDomain: String.fromEnvironment('FIREBASE_AUTH_DOMAIN'),
+    storageBucket: String.fromEnvironment('FIREBASE_STORAGE_BUCKET'),
+    measurementId: String.fromEnvironment('FIREBASE_WINDOWS_MEASUREMENT_ID'),
   );
 }
