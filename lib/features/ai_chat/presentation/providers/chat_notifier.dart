@@ -41,6 +41,15 @@ class ChatNotifier extends Notifier<ChatState> {
 
   void setConversation(int? id) => state = ChatState(conversationId: id);
 
+  Future<void> deleteConversation(int id) async {
+    await ref.read(chatRepositoryProvider).deleteConversation(id);
+    if (state.conversationId == id) state = const ChatState();
+  }
+
+  Future<void> renameConversation(int id, String title) {
+    return ref.read(chatRepositoryProvider).updateTitle(id, title);
+  }
+
   Future<void> sendMessage(String text) async {
     if (state.isGenerating) return;
 

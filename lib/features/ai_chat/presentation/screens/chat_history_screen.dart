@@ -4,6 +4,7 @@ import 'package:finly/core/db/app_database.dart';
 import 'package:finly/features/ai_chat/presentation/providers/chat_notifier.dart';
 import 'package:finly/features/ai_chat/presentation/providers/chat_providers.dart';
 import 'package:finly/features/ai_chat/presentation/screens/ai_chat_screen.dart';
+import 'package:finly/features/ai_chat/presentation/widgets/conversation_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -13,10 +14,9 @@ class ChatHistoryScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncConvs = ref.watch(allConversationsProvider);
-    final notifier = ref.read(chatNotifierProvider.notifier);
 
     void openChat(int? conversationId) {
-      notifier.setConversation(conversationId);
+      ref.read(chatNotifierProvider.notifier).setConversation(conversationId);
       unawaited(
         Navigator.push(
           context,
@@ -39,10 +39,12 @@ class ChatHistoryScreen extends ConsumerWidget {
               autofocus: true,
               decoration: const InputDecoration(labelText: 'Title'),
               onSubmitted: (_) {
-                final t = controller.text.trim();
-                if (t.isNotEmpty) {
+                final title = controller.text.trim();
+                if (title.isNotEmpty) {
                   unawaited(
-                    ref.read(chatRepositoryProvider).updateTitle(conv.id, t),
+                    ref
+                        .read(chatNotifierProvider.notifier)
+                        .renameConversation(conv.id, title),
                   );
                 }
                 Navigator.pop(context);
@@ -55,10 +57,12 @@ class ChatHistoryScreen extends ConsumerWidget {
               ),
               TextButton(
                 onPressed: () {
-                  final t = controller.text.trim();
-                  if (t.isNotEmpty) {
+                  final title = controller.text.trim();
+                  if (title.isNotEmpty) {
                     unawaited(
-                      ref.read(chatRepositoryProvider).updateTitle(conv.id, t),
+                      ref
+                          .read(chatNotifierProvider.notifier)
+                          .renameConversation(conv.id, title),
                     );
                   }
                   Navigator.pop(context);
@@ -102,7 +106,7 @@ class ChatHistoryScreen extends ConsumerWidget {
                     Navigator.pop(context);
                     unawaited(
                       ref
-                          .read(chatRepositoryProvider)
+                          .read(chatNotifierProvider.notifier)
                           .deleteConversation(conv.id),
                     );
                   },
@@ -132,30 +136,14 @@ class ChatHistoryScreen extends ConsumerWidget {
             itemCount: convs.length,
             itemBuilder: (context, i) {
               final conv = convs[i];
-              final d = conv.createdAt.toLocal();
-              final dateStr =
-                  '${d.year}-${d.month.toString().padLeft(2, '0')}'
-                  '-${d.day.toString().padLeft(2, '0')}';
-              return Dismissible(
-                key: ValueKey(conv.id),
-                direction: DismissDirection.endToStart,
-                background: Container(
-                  alignment: Alignment.centerRight,
-                  padding: const EdgeInsets.only(right: 16),
-                  color: Theme.of(context).colorScheme.error,
-                  child: Icon(
-                    Icons.delete_outline,
-                    color: Theme.of(context).colorScheme.onError,
-                  ),
-                ),
-                onDismissed: (_) => unawaited(
-                  ref.read(chatRepositoryProvider).deleteConversation(conv.id),
-                ),
-                child: ListTile(
-                  title: Text(conv.title),
-                  subtitle: Text(dateStr),
-                  onTap: () => openChat(conv.id),
-                  onLongPress: () => showConversationOptions(conv),
+              return ConversationTile(
+                conv: conv,
+                onTap: () => openChat(conv.id),
+                onLongPress: () => showConversationOptions(conv),
+                onDismissed: () => unawaited(
+                  ref
+                      .read(chatNotifierProvider.notifier)
+                      .deleteConversation(conv.id),
                 ),
               );
             },
