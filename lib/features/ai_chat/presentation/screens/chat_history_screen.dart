@@ -29,31 +29,16 @@ class ChatHistoryScreen extends ConsumerWidget {
 
     void showRenameDialog(Conversation conv) {
       final controller = TextEditingController(text: conv.title);
-      unawaited(showDialog<void>(
-        context: context,
-        builder: (_) => AlertDialog(
-          title: const Text('Rename Chat'),
-          content: TextField(
-            controller: controller,
-            autofocus: true,
-            decoration: const InputDecoration(labelText: 'Title'),
-            onSubmitted: (_) {
-              final t = controller.text.trim();
-              if (t.isNotEmpty) {
-                unawaited(
-                  ref.read(chatRepositoryProvider).updateTitle(conv.id, t),
-                );
-              }
-              Navigator.pop(context);
-            },
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
+      unawaited(
+        showDialog<void>(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: const Text('Rename Chat'),
+            content: TextField(
+              controller: controller,
+              autofocus: true,
+              decoration: const InputDecoration(labelText: 'Title'),
+              onSubmitted: (_) {
                 final t = controller.text.trim();
                 if (t.isNotEmpty) {
                   unawaited(
@@ -62,56 +47,75 @@ class ChatHistoryScreen extends ConsumerWidget {
                 }
                 Navigator.pop(context);
               },
-              child: const Text('Save'),
             ),
-          ],
-        ),
-      ).then((_) => controller.dispose()));
-    }
-
-    void showConversationOptions(Conversation conv) {
-      unawaited(showModalBottomSheet<void>(
-        context: context,
-        builder: (_) => SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.edit_outlined),
-                title: const Text('Rename'),
-                onTap: () {
-                  Navigator.pop(context);
-                  showRenameDialog(conv);
-                },
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
               ),
-              ListTile(
-                leading: Icon(
-                  Icons.delete_outline,
-                  color: Theme.of(context).colorScheme.error,
-                ),
-                title: Text(
-                  'Delete',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.error,
-                  ),
-                ),
-                onTap: () {
+              TextButton(
+                onPressed: () {
+                  final t = controller.text.trim();
+                  if (t.isNotEmpty) {
+                    unawaited(
+                      ref.read(chatRepositoryProvider).updateTitle(conv.id, t),
+                    );
+                  }
                   Navigator.pop(context);
-                  unawaited(
-                    ref
-                        .read(chatRepositoryProvider)
-                        .deleteConversation(conv.id),
-                  );
                 },
+                child: const Text('Save'),
               ),
             ],
           ),
+        ).then((_) => controller.dispose()),
+      );
+    }
+
+    void showConversationOptions(Conversation conv) {
+      unawaited(
+        showModalBottomSheet<void>(
+          context: context,
+          builder: (_) => SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.edit_outlined),
+                  title: const Text('Rename'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    showRenameDialog(conv);
+                  },
+                ),
+                ListTile(
+                  leading: Icon(
+                    Icons.delete_outline,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                  title: Text(
+                    'Delete',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    unawaited(
+                      ref
+                          .read(chatRepositoryProvider)
+                          .deleteConversation(conv.id),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
         ),
-      ));
+      );
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Finly Conversation History')),
+      appBar: AppBar(title: const Text('Finly AI')),
       body: asyncConvs.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),

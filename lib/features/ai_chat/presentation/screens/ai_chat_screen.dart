@@ -103,7 +103,7 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('AI Chat'),
+        title: const Text('Mich'),
         actions: [
           if (convId != null)
             IconButton(
