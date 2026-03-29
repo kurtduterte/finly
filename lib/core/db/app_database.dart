@@ -41,21 +41,21 @@ class AppDatabase extends _$AppDatabase {
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-        onCreate: (m) async {
-          await m.createAll();
-          await batch((b) {
-            b
-              ..insertAll(categories, SeedData.defaultCategories)
-              ..insertAll(accounts, SeedData.defaultAccounts);
-          });
-        },
-        onUpgrade: (m, from, to) async {
-          if (from < 2) {
-            await m.createTable(conversations);
-            await m.createTable(chatMessages);
-          }
-        },
-      );
+    onCreate: (m) async {
+      await m.createAll();
+      await batch((b) {
+        b
+          ..insertAll(categories, SeedData.defaultCategories)
+          ..insertAll(accounts, SeedData.defaultAccounts);
+      });
+    },
+    onUpgrade: (m, from, to) async {
+      if (from < 2) {
+        await m.createTable(conversations);
+        await m.createTable(chatMessages);
+      }
+    },
+  );
 }
 
 final appDatabaseProvider = Provider<AppDatabase>((ref) {
