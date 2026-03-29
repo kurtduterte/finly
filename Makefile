@@ -1,4 +1,19 @@
-.PHONY: setup analyze format lint test test-coverage gen gen-watch clean build-apk build-aab build-ios upgrade
+.PHONY: setup analyze format lint test test-coverage gen gen-watch clean build-apk build-aab build-ios upgrade run run-android run-web
+
+# Sentinel — rebuilt only when pubspec.lock changes, skips pub get otherwise
+.pub-cache-stamp: pubspec.lock
+	flutter pub get
+	@touch .pub-cache-stamp
+
+# Smart run targets — pub get only runs when dependencies changed
+run: .pub-cache-stamp
+	flutter run
+
+run-android: .pub-cache-stamp
+	flutter run -d android
+
+run-web: .pub-cache-stamp
+	flutter run -d chrome
 
 # Bootstrap dev environment (run once after cloning)
 setup:
