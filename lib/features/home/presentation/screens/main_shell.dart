@@ -1,6 +1,7 @@
 import 'package:finly/features/ai_chat/presentation/screens/chat_history_screen.dart';
 import 'package:finly/features/expenses/presentation/screens/expenses_screen.dart';
 import 'package:finly/features/home/presentation/screens/home_screen.dart';
+import 'package:finly/features/model_setup/presentation/widgets/gemma_status_icon.dart';
 import 'package:finly/features/scan/presentation/screens/scan_screen.dart';
 import 'package:finly/features/settings/presentation/screens/settings_screen.dart';
 import 'package:flutter/material.dart';
@@ -53,6 +54,7 @@ class _MainShellState extends State<MainShell> {
       appBar: AppBar(
         title: Text(_titles[_index]),
         actions: [
+          const GemmaStatusIcon(),
           IconButton(
             icon: const Icon(Icons.chat_outlined),
             tooltip: 'Chat with AI',
