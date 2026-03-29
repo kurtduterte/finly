@@ -1,0 +1,84 @@
+name: iOS Debug Build
+
+on:
+  push:
+    branches: [release/ios]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Cache Gemma model
+        id: cache-model
+        uses: actions/cache@v4
+        with:
+          path: assets/models/gemma3-1b-it-int4.task
+          key: gemma-model-gemma3-1b-it-int4
+
+      - name: Download Gemma model
+        if: steps.cache-model.outputs.cache-hit != 'true'
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          mkdir -p assets/models
+          if [ -z "$HF_TOKEN" ]; then
+            echo "::warning::HF_TOKEN secret not set — model will be a stub. AI features won't work."
+            dd if=/dev/zero bs=1k count=1 | tr '\0' '\x00' > assets/models/gemma3-1b-it-int4.task
+          else
+            curl -fL \
+              -H "Authorization: Bearer $HF_TOKEN" \
+              "https://huggingface.co/litert-community/Gemma3-1B-IT/resolve/main/gemma3-1b-it-int4.task" \
+              -o assets/models/gemma3-1b-it-int4.task
+          fi
+
+      - name: Cache pub packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.pub-cache
+          key: pub-${{ hashFiles('pubspec.lock') }}
+          restore-keys: pub-
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Cache CocoaPods
+        id: cache-pods
+        uses: actions/cache@v4
+        with:
+          path: |
+            ios/Pods
+            ~/.cocoapods
+          key: pods-${{ hashFiles('ios/Podfile.lock') }}
+          restore-keys: pods-
+
+      - name: Pod install
+        if: steps.cache-pods.outputs.cache-hit != 'true'
+        run: pod install
+        working-directory: ios
+
+      - name: Build iOS (no codesign)
+        run: flutter build ios --debug --no-codesign
+
+      - name: Package IPA
+        run: |
+          cd build/ios/iphoneos
+          mkdir Payload
+          cp -r Runner.app Payload/
+          zip -r Finly-debug.ipa Payload
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: finly-ios-debug-${{ github.run_number }}
+          path: build/ios/iphoneos/Finly-debug.ipa
+          retention-days: 14
