@@ -121,12 +121,14 @@ class ChatNotifier extends Notifier<ChatState> {
     final String aiMessage;
 
     if (parsed != null) {
-      final category = matchCategory(categories, parsed.categoryName) ??
+      final category =
+          matchCategory(categories, parsed.categoryName) ??
           categories.firstWhere(
             (c) => c.name == 'Other',
             orElse: () => categories.first,
           );
-      final account = matchAccount(accounts, parsed.accountName) ??
+      final account =
+          matchAccount(accounts, parsed.accountName) ??
           accounts.firstWhere(
             (a) => a.name == 'Cash',
             orElse: () => accounts.first,
@@ -143,15 +145,19 @@ class ChatNotifier extends Notifier<ChatState> {
       );
 
       final amount = (parsed.amountCentavos / 100).toStringAsFixed(2);
-      aiMessage = '✅ Expense saved!\n'
+      aiMessage =
+          '✅ Expense saved!\n'
           '₱$amount – ${parsed.description}\n'
           '${category.name} · ${account.name}';
     } else {
-      aiMessage = "Sorry, I couldn't extract the expense details. "
+      aiMessage =
+          "Sorry, I couldn't extract the expense details. "
           'Try: "Add expense ₱150 for lunch"';
     }
 
-    await ref.read(chatRepositoryProvider).addMessage(
+    await ref
+        .read(chatRepositoryProvider)
+        .addMessage(
           conversationId: convId,
           text: aiMessage,
           isUser: false,
@@ -168,7 +174,7 @@ class ChatNotifier extends Notifier<ChatState> {
     List<ChatMessage> history,
   ) async {
     const system =
-        'You are Finly, a helpful personal finance assistant. Be concise.';
+        'You are Mich, a helpful personal finance assistant. Be concise.';
 
     var expenseBlock = '';
     if (_isFinanceQuery(userMessage)) {
