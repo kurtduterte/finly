@@ -39,6 +39,13 @@ class ConversationsDao extends DatabaseAccessor<AppDatabase>
         .watch();
   }
 
+  Future<List<ChatMessage>> getMessages(int conversationId) {
+    return (select(chatMessages)
+          ..where((t) => t.conversationId.equals(conversationId))
+          ..orderBy([(t) => OrderingTerm.asc(t.createdAt)]))
+        .get();
+  }
+
   Future<int> insertMessage({
     required int conversationId,
     required String messageText,

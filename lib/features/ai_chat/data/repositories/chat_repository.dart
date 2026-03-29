@@ -17,6 +17,9 @@ class ChatRepository {
   Stream<List<ChatMessage>> watchMessages(int conversationId) =>
       _dao.watchMessages(conversationId);
 
+  Future<List<ChatMessage>> getMessages(int conversationId) =>
+      _dao.getMessages(conversationId);
+
   Future<void> addMessage({
     required int conversationId,
     required String text,

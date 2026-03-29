@@ -44,6 +44,20 @@ class GemmaService {
     }
   }
 
+  // Streams tokens for a multi-turn conversation.
+  // Each message in [messages] is added as a separate chat turn before
+  // generating the next AI response.
+  Stream<String> streamMessages(List<Message> messages) async* {
+    _model ??= await FlutterGemma.getActiveModel();
+    final chat = await _model!.createChat();
+    for (final m in messages) {
+      await chat.addQueryChunk(m);
+    }
+    await for (final token in chat.generateChatResponseAsync()) {
+      if (token is TextResponse) yield token.token;
+    }
+  }
+
   void dispose() {
     unawaited(_model?.close());
     _model = null;
