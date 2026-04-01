@@ -1,16 +1,17 @@
-# finly
+# Finly
 
-A new Flutter project.
+Finly is an offline-first personal finance tracker that makes expense logging effortless. Most people know they're spending money but have no clear picture of where it actually goes — manually entering every purchase is tedious, so it never happens consistently.
 
-## Getting Started
+Finly solves this by letting you photograph a receipt and having an on-device AI (Gemma 3) extract the expense automatically. No cloud, no subscription, no data leaving your phone.
 
-This project is a starting point for a Flutter application.
+## Main Features
 
-A few resources to get you started if this is your first Flutter project:
+- **Receipt scanning** — point your camera at a receipt and Finly creates the expense entry for you using a local LLM
+- **Expense management** — organize spending by account and category
+- **AI chat** — ask questions about your finances in a persistent, multi-conversation chat powered by the same on-device model
+- **Optional sync** — back up and restore data via Firestore when you want cross-device access
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## Docs
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- [Architecture](docs/architecture.md)
+- [Developer Setup](docs/dev-setup.md)
