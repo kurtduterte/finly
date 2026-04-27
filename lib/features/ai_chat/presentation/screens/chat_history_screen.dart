@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:finly/core/db/app_database.dart';
+import 'package:finly/core/theme/app_colors.dart';
 import 'package:finly/features/ai_chat/presentation/providers/chat_notifier.dart';
 import 'package:finly/features/ai_chat/presentation/providers/chat_providers.dart';
 import 'package:finly/features/ai_chat/presentation/screens/ai_chat_screen.dart';
@@ -126,9 +127,32 @@ class ChatHistoryScreen extends ConsumerWidget {
         data: (convs) {
           if (convs.isEmpty) {
             return const Center(
-              child: Text(
-                'No chats yet.\nTap + to start.',
-                textAlign: TextAlign.center,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.chat_bubble_outline_rounded,
+                    size: 48,
+                    color: AppColors.textMuted,
+                  ),
+                  SizedBox(height: 12),
+                  Text(
+                    'No chats yet',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'Tap + to start a conversation',
+                    style: TextStyle(
+                      color: AppColors.textMuted,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
               ),
             );
           }
@@ -153,7 +177,7 @@ class ChatHistoryScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton(
         tooltip: 'New Chat',
         onPressed: () => openChat(null),
-        child: const Icon(Icons.edit_outlined),
+        child: const Icon(Icons.edit_rounded),
       ),
     );
   }
