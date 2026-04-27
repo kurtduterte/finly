@@ -5,6 +5,224 @@ import 'package:flutter/services.dart';
 final class AppTheme {
   AppTheme._();
 
+  static ThemeData get light {
+    const cs = ColorScheme(
+      brightness: Brightness.light,
+      primary: AppLightColors.primary,
+      onPrimary: AppLightColors.onPrimary,
+      primaryContainer: AppLightColors.primaryContainer,
+      onPrimaryContainer: AppLightColors.primaryDark,
+      secondary: AppLightColors.secondary,
+      onSecondary: Colors.white,
+      secondaryContainer: AppLightColors.secondaryContainer,
+      onSecondaryContainer: AppLightColors.secondary,
+      surface: AppLightColors.surface,
+      onSurface: AppLightColors.textPrimary,
+      surfaceContainerHighest: AppLightColors.surfaceElevated,
+      onSurfaceVariant: AppLightColors.textSecondary,
+      outline: AppLightColors.border,
+      outlineVariant: AppLightColors.border,
+      error: AppLightColors.debit,
+      onError: Colors.white,
+      scrim: Colors.black54,
+      inverseSurface: AppLightColors.textPrimary,
+      onInverseSurface: AppLightColors.background,
+      inversePrimary: AppLightColors.primaryDark,
+    );
+
+    return ThemeData(
+      useMaterial3: true,
+      colorScheme: cs,
+      scaffoldBackgroundColor: AppLightColors.background,
+      cardTheme: CardThemeData(
+        color: AppLightColors.surface,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: AppLightColors.border, width: 0.5),
+        ),
+        margin: EdgeInsets.zero,
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: AppLightColors.background,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        systemOverlayStyle: SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.dark,
+          systemNavigationBarColor: AppLightColors.surface,
+        ),
+        iconTheme: IconThemeData(color: AppLightColors.textPrimary),
+        actionsIconTheme: IconThemeData(color: AppLightColors.textSecondary),
+        titleTextStyle: TextStyle(
+          color: AppLightColors.textPrimary,
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: AppLightColors.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        height: 64,
+        indicatorColor: AppLightColors.primaryContainer,
+        iconTheme: WidgetStateProperty.resolveWith((s) {
+          final on = s.contains(WidgetState.selected);
+          return IconThemeData(
+            color: on ? AppLightColors.primary : AppLightColors.textMuted,
+            size: 22,
+          );
+        }),
+        labelTextStyle: WidgetStateProperty.resolveWith((s) {
+          final on = s.contains(WidgetState.selected);
+          return TextStyle(
+            color: on ? AppLightColors.primary : AppLightColors.textMuted,
+            fontSize: 11,
+            fontWeight: on ? FontWeight.w600 : FontWeight.w400,
+          );
+        }),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: AppLightColors.surfaceElevated,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppLightColors.border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppLightColors.border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide:
+              const BorderSide(color: AppLightColors.primary, width: 1.5),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppLightColors.debit),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide:
+              const BorderSide(color: AppLightColors.debit, width: 1.5),
+        ),
+        labelStyle: const TextStyle(
+          color: AppLightColors.textSecondary,
+          fontSize: 14,
+        ),
+        hintStyle:
+            const TextStyle(color: AppLightColors.textMuted, fontSize: 14),
+        prefixStyle:
+            const TextStyle(color: AppLightColors.textSecondary),
+        suffixIconColor: AppLightColors.textMuted,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: AppLightColors.primary,
+          foregroundColor: AppLightColors.onPrimary,
+          minimumSize: const Size.fromHeight(50),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          textStyle: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.2,
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppLightColors.textPrimary,
+          side: const BorderSide(color: AppLightColors.border),
+          minimumSize: const Size.fromHeight(50),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          textStyle: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(foregroundColor: AppLightColors.primary),
+      ),
+      dividerTheme: const DividerThemeData(
+        color: AppLightColors.border,
+        thickness: 0.5,
+        space: 0,
+      ),
+      listTileTheme: const ListTileThemeData(
+        iconColor: AppLightColors.textSecondary,
+        textColor: AppLightColors.textPrimary,
+        subtitleTextStyle: TextStyle(
+          color: AppLightColors.textSecondary,
+          fontSize: 13,
+        ),
+      ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: AppLightColors.primary,
+        foregroundColor: AppLightColors.onPrimary,
+        elevation: 0,
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: AppLightColors.surfaceElevated,
+        contentTextStyle:
+            const TextStyle(color: AppLightColors.textPrimary),
+        actionTextColor: AppLightColors.primary,
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        behavior: SnackBarBehavior.floating,
+      ),
+      progressIndicatorTheme: const ProgressIndicatorThemeData(
+        color: AppLightColors.primary,
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: AppLightColors.surfaceElevated,
+        selectedColor: AppLightColors.primaryContainer,
+        side: const BorderSide(color: AppLightColors.border, width: 0.5),
+        labelStyle:
+            const TextStyle(color: AppLightColors.textPrimary, fontSize: 13),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      ),
+      dropdownMenuTheme: const DropdownMenuThemeData(
+        menuStyle: MenuStyle(
+          backgroundColor: WidgetStatePropertyAll(
+            AppLightColors.surfaceElevated,
+          ),
+        ),
+      ),
+      datePickerTheme: DatePickerThemeData(
+        backgroundColor: AppLightColors.surface,
+        headerBackgroundColor: AppLightColors.primaryContainer,
+        headerForegroundColor: AppLightColors.primary,
+        dayForegroundColor: WidgetStateProperty.resolveWith((s) {
+          if (s.contains(WidgetState.selected)) return AppLightColors.onPrimary;
+          return AppLightColors.textPrimary;
+        }),
+        dayBackgroundColor: WidgetStateProperty.resolveWith((s) {
+          if (s.contains(WidgetState.selected)) return AppLightColors.primary;
+          return Colors.transparent;
+        }),
+        todayForegroundColor:
+            const WidgetStatePropertyAll(AppLightColors.primary),
+        todayBorder: const BorderSide(color: AppLightColors.primary),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+    );
+  }
+
   static ThemeData get dark {
     const cs = ColorScheme(
       brightness: Brightness.dark,
