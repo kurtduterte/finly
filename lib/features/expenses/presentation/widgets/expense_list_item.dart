@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:finly/core/db/app_database.dart';
 import 'package:finly/core/db/daos/expenses_dao.dart';
+import 'package:finly/core/theme/app_colors.dart';
+import 'package:finly/core/utils/currency_format.dart';
 import 'package:finly/features/expenses/presentation/providers/expenses_providers.dart';
 import 'package:finly/features/expenses/presentation/screens/expense_form_screen.dart';
 import 'package:flutter/material.dart';
@@ -28,7 +30,6 @@ class ExpenseListItem extends ConsumerWidget {
     final expense = item.expense;
     final category = item.category;
     final account = item.account;
-    final amount = expense.amountCentavos / 100;
     final color = _parseColor(category.color);
 
     return Dismissible(
@@ -36,9 +37,20 @@ class ExpenseListItem extends ConsumerWidget {
       direction: DismissDirection.endToStart,
       background: Container(
         alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 16),
-        color: Colors.red,
-        child: const Icon(Icons.delete, color: Colors.white),
+        padding: const EdgeInsets.only(right: 20),
+        decoration: BoxDecoration(
+          color: AppColors.debit.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: AppColors.debit.withValues(alpha: 0.4),
+            width: 0.5,
+          ),
+        ),
+        child: const Icon(
+          Icons.delete_rounded,
+          color: AppColors.debit,
+          size: 22,
+        ),
       ),
       confirmDismiss: (_) async => true,
       onDismissed: (_) async {
@@ -65,24 +77,90 @@ class ExpenseListItem extends ConsumerWidget {
           );
         }
       },
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: color.withValues(alpha: 0.2),
-          child: Icon(
-            IconData(category.iconCodepoint, fontFamily: 'MaterialIcons'),
-            color: color,
+      child: Material(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => ExpenseFormScreen(initial: item),
+            ),
           ),
-        ),
-        title: Text(expense.description),
-        subtitle:
-            Text('${account.name} · ${_shortDate(expense.date)}'),
-        trailing: Text(
-          '₱${amount.toStringAsFixed(2)}',
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => ExpenseFormScreen(initial: item),
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.border, width: 0.5),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 4,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(16),
+                      bottomLeft: Radius.circular(16),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    IconData(
+                      category.iconCodepoint,
+                      fontFamily: 'MaterialIcons',
+                    ),
+                    color: color,
+                    size: 18,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        expense.description,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${account.name} · ${_shortDate(expense.date)}',
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(right: 16),
+                  child: Text(
+                    formatPeso(expense.amountCentavos),
+                    style: const TextStyle(
+                      color: AppColors.debit,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
