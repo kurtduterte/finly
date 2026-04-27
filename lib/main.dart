@@ -1,29 +1,40 @@
+import 'package:finly/core/theme/app_theme.dart';
+import 'package:finly/core/theme/theme_provider.dart';
 import 'package:finly/features/auth/presentation/providers/auth_providers.dart';
 import 'package:finly/features/auth/presentation/screens/login_screen.dart';
 import 'package:finly/features/home/presentation/screens/main_shell.dart';
 import 'package:finly/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_gemma/flutter_gemma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  if (Firebase.apps.isEmpty) {
+  await FlutterGemma.initialize();
+  try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+  } on FirebaseException catch (e) {
+    if (e.code != 'duplicate-app') rethrow;
   }
   runApp(const ProviderScope(child: FinlyApp()));
 }
 
-class FinlyApp extends StatelessWidget {
+class FinlyApp extends ConsumerWidget {
   const FinlyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeModeProvider);
+
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: _AppRouter(),
+      theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: themeMode,
+      home: const _AppRouter(),
     );
   }
 }
