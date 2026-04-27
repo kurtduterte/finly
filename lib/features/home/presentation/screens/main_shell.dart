@@ -1,7 +1,5 @@
-import 'package:finly/features/ai_chat/presentation/screens/chat_history_screen.dart';
 import 'package:finly/features/expenses/presentation/screens/expenses_screen.dart';
 import 'package:finly/features/home/presentation/screens/home_screen.dart';
-import 'package:finly/features/model_setup/presentation/widgets/gemma_status_icon.dart';
 import 'package:finly/features/scan/presentation/screens/scan_screen.dart';
 import 'package:finly/features/settings/presentation/screens/settings_screen.dart';
 import 'package:flutter/material.dart';
@@ -9,27 +7,25 @@ import 'package:flutter/material.dart';
 const _destinations = [
   NavigationDestination(
     icon: Icon(Icons.home_outlined),
-    selectedIcon: Icon(Icons.home),
+    selectedIcon: Icon(Icons.home_rounded),
     label: 'Home',
   ),
   NavigationDestination(
     icon: Icon(Icons.receipt_long_outlined),
-    selectedIcon: Icon(Icons.receipt_long),
+    selectedIcon: Icon(Icons.receipt_long_rounded),
     label: 'Expenses',
   ),
   NavigationDestination(
     icon: Icon(Icons.document_scanner_outlined),
-    selectedIcon: Icon(Icons.document_scanner),
+    selectedIcon: Icon(Icons.document_scanner_rounded),
     label: 'Scan',
   ),
   NavigationDestination(
-    icon: Icon(Icons.settings_outlined),
-    selectedIcon: Icon(Icons.settings),
-    label: 'Settings',
+    icon: Icon(Icons.person_outline_rounded),
+    selectedIcon: Icon(Icons.person_rounded),
+    label: 'Profile',
   ),
 ];
-
-const _titles = ['Finly', 'Expenses', 'Scan Receipt', 'Settings'];
 
 const List<Widget> _pages = [
   HomeScreen(),
@@ -51,26 +47,7 @@ class _MainShellState extends State<MainShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_titles[_index]),
-        actions: [
-          const GemmaStatusIcon(),
-          IconButton(
-            icon: const Icon(Icons.chat_outlined),
-            tooltip: 'Chat with AI',
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute<void>(
-                builder: (_) => const ChatHistoryScreen(),
-              ),
-            ),
-          ),
-        ],
-      ),
-      body: IndexedStack(
-        index: _index,
-        children: _pages,
-      ),
+      body: IndexedStack(index: _index, children: _pages),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: (i) => setState(() => _index = i),
