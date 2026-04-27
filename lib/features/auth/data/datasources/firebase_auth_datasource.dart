@@ -9,6 +9,13 @@ class _SignInCancelledException implements Exception {
   String toString() => 'Sign-in cancelled by user.';
 }
 
+class _NoUserException implements Exception {
+  const _NoUserException();
+
+  @override
+  String toString() => 'No authenticated user found.';
+}
+
 class FirebaseAuthDatasource {
   FirebaseAuthDatasource({
     FirebaseAuth? auth,
@@ -62,6 +69,33 @@ class FirebaseAuthDatasource {
       _auth.signOut(),
       _googleSignIn.signOut(),
     ]);
+  }
+
+  Future<void> updateDisplayName(String name) async {
+    await _auth.currentUser?.updateDisplayName(name);
+    await _auth.currentUser?.reload();
+  }
+
+  Future<void> updatePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final user = _auth.currentUser;
+    if (user == null || user.email == null) {
+      throw const _NoUserException();
+    }
+    final credential = EmailAuthProvider.credential(
+      email: user.email!,
+      password: currentPassword,
+    );
+    await user.reauthenticateWithCredential(credential);
+    await user.updatePassword(newPassword);
+  }
+
+  bool get isEmailUser {
+    final user = _auth.currentUser;
+    if (user == null) return false;
+    return user.providerData.any((p) => p.providerId == 'password');
   }
 
   AuthUser _toModel(User user) => AuthUser(

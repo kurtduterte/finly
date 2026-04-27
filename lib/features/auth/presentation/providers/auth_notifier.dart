@@ -42,4 +42,24 @@ class AuthNotifier extends AsyncNotifier<void> {
       () => ref.read(authRepositoryProvider).signOut(),
     );
   }
+
+  Future<void> updateDisplayName(String name) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(
+      () => ref.read(authRepositoryProvider).updateDisplayName(name),
+    );
+  }
+
+  Future<void> updatePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(
+      () => ref.read(authRepositoryProvider).updatePassword(
+            currentPassword: currentPassword,
+            newPassword: newPassword,
+          ),
+    );
+  }
 }

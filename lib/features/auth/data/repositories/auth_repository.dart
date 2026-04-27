@@ -23,4 +23,18 @@ class AuthRepository {
   Future<AuthUser> signInWithGoogle() => _datasource.signInWithGoogle();
 
   Future<void> signOut() => _datasource.signOut();
+
+  Future<void> updateDisplayName(String name) =>
+      _datasource.updateDisplayName(name);
+
+  Future<void> updatePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) =>
+      _datasource.updatePassword(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+      );
+
+  bool get isEmailUser => _datasource.isEmailUser;
 }
