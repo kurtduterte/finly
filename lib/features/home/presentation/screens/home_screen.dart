@@ -1,7 +1,9 @@
 import 'package:finly/core/theme/app_colors.dart';
+import 'package:finly/features/ai_chat/presentation/screens/chat_history_screen.dart';
 import 'package:finly/features/auth/presentation/providers/auth_providers.dart';
 import 'package:finly/features/expenses/presentation/providers/expenses_providers.dart';
 import 'package:finly/features/expenses/presentation/widgets/expense_list_item.dart';
+import 'package:finly/features/home/presentation/widgets/accounts_summary_card.dart';
 import 'package:finly/features/home/presentation/widgets/quick_actions.dart';
 import 'package:finly/features/home/presentation/widgets/spending_card.dart';
 import 'package:flutter/material.dart';
@@ -58,7 +60,13 @@ class HomeScreen extends ConsumerWidget {
           ),
           const SliverToBoxAdapter(
             child: Padding(
-              padding: EdgeInsets.fromLTRB(20, 16, 20, 0),
+              padding: EdgeInsets.fromLTRB(20, 12, 20, 0),
+              child: AccountsSummaryCard(),
+            ),
+          ),
+          const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(20, 12, 20, 0),
               child: QuickActions(),
             ),
           ),
@@ -165,18 +173,26 @@ class _HomeHeader extends StatelessWidget {
             ],
           ),
         ),
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: AppColors.primaryContainer,
-            shape: BoxShape.circle,
-            border: Border.all(color: AppColors.primaryDark, width: 0.5),
+        GestureDetector(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute<void>(
+              builder: (_) => const ChatHistoryScreen(),
+            ),
           ),
-          child: const Icon(
-            Icons.person_rounded,
-            color: AppColors.primary,
-            size: 20,
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: AppColors.primaryContainer,
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.primaryDark, width: 0.5),
+            ),
+            child: const Icon(
+              Icons.chat_bubble_outline_rounded,
+              color: AppColors.primary,
+              size: 20,
+            ),
           ),
         ),
       ],

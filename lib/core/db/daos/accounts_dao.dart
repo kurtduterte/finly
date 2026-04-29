@@ -13,6 +13,9 @@ class AccountsDao extends DatabaseAccessor<AppDatabase>
 
   Future<List<Account>> getAll() => select(accounts).get();
 
+  Future<Account> getById(int id) =>
+      (select(accounts)..where((t) => t.id.equals(id))).getSingle();
+
   Future<int> insertAccount(AccountsCompanion entry) =>
       into(accounts).insert(entry);
 

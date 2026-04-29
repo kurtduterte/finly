@@ -15,11 +15,56 @@ class ExpensesRepository {
 
   Future<List<Account>> getAllAccounts() => db.accountsDao.getAll();
 
-  Future<void> addExpense(ExpensesCompanion entry) =>
-      db.expensesDao.insertExpense(entry);
+  Future<void> addExpense(ExpensesCompanion entry) => db.transaction(() async {
+        await db.expensesDao.insertExpense(entry);
+        final account =
+            await db.accountsDao.getById(entry.accountId.value);
+        await db.accountsDao.updateAccount(
+          account.copyWith(
+            balanceCentavos:
+                account.balanceCentavos - entry.amountCentavos.value,
+          ),
+        );
+      });
 
-  Future<void> updateExpense(Expense expense) =>
-      db.expensesDao.updateExpense(expense);
+  Future<void> updateExpense(Expense newExpense) =>
+      db.transaction(() async {
+        final old =
+            await db.expensesDao.getExpenseById(newExpense.id);
 
-  Future<void> deleteExpense(int id) => db.expensesDao.deleteExpense(id);
+        // Restore old account balance.
+        final oldAccount =
+            await db.accountsDao.getById(old.accountId);
+        await db.accountsDao.updateAccount(
+          oldAccount.copyWith(
+            balanceCentavos:
+                oldAccount.balanceCentavos + old.amountCentavos,
+          ),
+        );
+
+        // Re-fetch in case old and new account are the same.
+        final newAccount =
+            await db.accountsDao.getById(newExpense.accountId);
+        await db.accountsDao.updateAccount(
+          newAccount.copyWith(
+            balanceCentavos:
+                newAccount.balanceCentavos - newExpense.amountCentavos,
+          ),
+        );
+
+        await db.expensesDao.updateExpense(newExpense);
+      });
+
+  Future<void> deleteExpense(int id) => db.transaction(() async {
+        final expense = await db.expensesDao.getExpenseById(id);
+        await db.expensesDao.deleteExpense(id);
+        final account =
+            await db.accountsDao.getById(expense.accountId);
+        await db.accountsDao.updateAccount(
+          account.copyWith(
+            balanceCentavos:
+                account.balanceCentavos + expense.amountCentavos,
+          ),
+        );
+      });
 }

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:finly/core/db/app_database.dart';
 import 'package:finly/core/db/daos/expenses_dao.dart';
 import 'package:finly/core/theme/app_colors.dart';
+import 'package:finly/core/utils/color_utils.dart';
 import 'package:finly/core/utils/currency_format.dart';
 import 'package:finly/features/expenses/presentation/providers/expenses_providers.dart';
 import 'package:finly/features/expenses/presentation/screens/expense_form_screen.dart';
@@ -16,11 +17,6 @@ const _months = [
 
 String _shortDate(DateTime d) => '${_months[d.month - 1]} ${d.day}';
 
-Color _parseColor(String hex) {
-  final h = hex.replaceAll('#', '');
-  return Color(int.parse('FF$h', radix: 16));
-}
-
 class ExpenseListItem extends ConsumerWidget {
   const ExpenseListItem({required this.item, super.key});
   final ExpenseWithDetails item;
@@ -30,7 +26,7 @@ class ExpenseListItem extends ConsumerWidget {
     final expense = item.expense;
     final category = item.category;
     final account = item.account;
-    final color = _parseColor(category.color);
+    final color = parseHexColor(category.color);
 
     return Dismissible(
       key: ValueKey(expense.id),

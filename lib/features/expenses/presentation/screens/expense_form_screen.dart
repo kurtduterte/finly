@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:finly/core/db/app_database.dart';
 import 'package:finly/core/db/daos/expenses_dao.dart';
 import 'package:finly/features/expenses/presentation/providers/expenses_providers.dart';
@@ -18,9 +19,28 @@ String _formatDate(DateTime d) =>
   return m != null ? (m.group(1)!, m.group(2)!) : null;
 }
 
+class ScanPrefill {
+  const ScanPrefill({
+    this.amountCentavos,
+    this.description,
+    this.categoryName,
+    this.accountName,
+    this.date,
+    this.receiptId,
+  });
+
+  final int? amountCentavos;
+  final String? description;
+  final String? categoryName;
+  final String? accountName;
+  final DateTime? date;
+  final int? receiptId;
+}
+
 class ExpenseFormScreen extends ConsumerStatefulWidget {
-  const ExpenseFormScreen({this.initial, super.key});
+  const ExpenseFormScreen({this.initial, this.prefill, super.key});
   final ExpenseWithDetails? initial;
+  final ScanPrefill? prefill;
 
   @override
   ConsumerState<ExpenseFormScreen> createState() => _ExpenseFormScreenState();
@@ -41,21 +61,56 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
   void initState() {
     super.initState();
     final e = widget.initial?.expense;
+    final p = widget.prefill;
     _amountCtrl = TextEditingController(
-      text: e != null ? (e.amountCentavos / 100).toStringAsFixed(2) : '',
+      text: e != null
+          ? (e.amountCentavos / 100).toStringAsFixed(2)
+          : p?.amountCentavos != null
+              ? (p!.amountCentavos! / 100).toStringAsFixed(2)
+              : '',
     );
-    _date = e?.date ?? DateTime.now();
+    _date = e?.date ?? p?.date ?? DateTime.now();
     _category = widget.initial?.category;
     _account = widget.initial?.account;
 
     var otherType = '';
-    var desc = e?.description ?? '';
+    var desc = e?.description ?? p?.description ?? '';
     if (_category?.name == 'Other' && desc.isNotEmpty) {
       final parsed = _parseOther(desc);
       if (parsed != null) (otherType, desc) = parsed;
     }
     _otherTypeCtrl = TextEditingController(text: otherType);
     _descCtrl = TextEditingController(text: desc);
+  }
+
+  // Categories/accounts load async; set prefill values once available.
+  void _applyPrefillSelections(
+    List<Category> categories,
+    List<Account> accounts,
+  ) {
+    if (_category != null && _account != null) return;
+    final p = widget.prefill;
+    if (p == null) return;
+    if (_category == null && p.categoryName != null) {
+      final lower = p.categoryName!.toLowerCase();
+      final match = categories.firstWhere(
+        (c) => c.name.toLowerCase() == lower,
+        orElse: () => categories.firstWhere(
+          (c) => c.name.toLowerCase().contains(lower) ||
+              lower.contains(c.name.toLowerCase()),
+          orElse: () => categories.first,
+        ),
+      );
+      _category = match;
+    }
+    if (_account == null && p.accountName != null) {
+      final lower = p.accountName!.toLowerCase();
+      final match = accounts.firstWhere(
+        (a) => a.name.toLowerCase() == lower,
+        orElse: () => accounts.first,
+      );
+      _account = match;
+    }
   }
 
   @override
@@ -97,6 +152,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
           date: _date,
           categoryId: _category!.id,
           accountId: _account!.id,
+          receiptId: Value(widget.prefill?.receiptId),
         ),
       );
     } else {
@@ -122,6 +178,12 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
   Widget build(BuildContext context) {
     final categories = ref.watch(categoriesListProvider);
     final accounts = ref.watch(accountsListProvider);
+
+    // Apply prefill category/account once data loads.
+    if (categories.hasValue && accounts.hasValue) {
+      _applyPrefillSelections(categories.value!, accounts.value!);
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.initial == null ? 'Add Expense' : 'Edit Expense'),
