@@ -31,8 +31,7 @@ class AccountsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Accounts')),
       body: accountsAsync.when(
-        loading: () =>
-            const Center(child: CircularProgressIndicator()),
+        loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('$e')),
         data: (accounts) {
           final grouped = <String, List<Account>>{};
@@ -50,9 +49,7 @@ class AccountsScreen extends ConsumerWidget {
                 child: _TotalBalanceHeader(totalCentavos: total),
               ),
               for (final (type, list) in sections) ...[
-                SliverToBoxAdapter(
-                  child: _SectionLabel(type: type),
-                ),
+                SliverToBoxAdapter(child: _SectionLabel(type: type)),
                 SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   sliver: SliverList.separated(
@@ -80,35 +77,33 @@ class _TotalBalanceHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(kRadius16),
           gradient: const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF0F2B1A), Color(0xFF0D1F2D)],
+            colors: [kCardGradientStart, kCardGradientEnd],
           ),
-          border: Border.all(color: AppColors.primaryContainer, width: 0.8),
+          border: Border.all(color: cs.primaryContainer, width: 0.8),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Total Balance',
-              style: TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 13,
-              ),
+              style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13),
             ),
             const SizedBox(height: 6),
             Text(
               formatPeso(totalCentavos),
-              style: const TextStyle(
-                color: AppColors.textPrimary,
+              style: TextStyle(
+                color: cs.onSurface,
                 fontSize: 32,
                 fontWeight: FontWeight.w700,
                 letterSpacing: -1,
@@ -134,12 +129,13 @@ class _SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
       child: Text(
         _label,
-        style: const TextStyle(
-          color: AppColors.textSecondary,
+        style: TextStyle(
+          color: cs.onSurfaceVariant,
           fontSize: 13,
           fontWeight: FontWeight.w600,
           letterSpacing: 0.3,

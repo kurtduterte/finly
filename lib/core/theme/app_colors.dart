@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 
+Color parseHexColor(String hex) {
+  final h = hex.replaceAll('#', '');
+  return Color(int.parse('FF$h', radix: 16));
+}
+
 abstract final class AppColors {
   // Backgrounds — deep navy-black layers
   static const Color background = Color(0xFF0B0D12);
@@ -27,6 +32,18 @@ abstract final class AppColors {
   static const Color credit = Color(0xFF4ADE80);
   static const Color warning = Color(0xFFFBBF24);
 }
+
+// Gradient background used in spending card and total-balance header
+const kCardGradientStart = Color(0xFF0F2B1A);
+const kCardGradientEnd = Color(0xFF0D1F2D);
+
+// Common border radii
+const kRadius8 = 8.0;
+const kRadius10 = 10.0;
+const kRadius12 = 12.0;
+const kRadius14 = 14.0;
+const kRadius16 = 16.0;
+const kRadius20 = 20.0;
 
 abstract final class AppLightColors {
   // Backgrounds — clean white layers

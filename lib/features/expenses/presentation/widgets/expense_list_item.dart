@@ -3,19 +3,12 @@ import 'dart:async';
 import 'package:finly/core/db/app_database.dart';
 import 'package:finly/core/db/daos/expenses_dao.dart';
 import 'package:finly/core/theme/app_colors.dart';
-import 'package:finly/core/utils/color_utils.dart';
 import 'package:finly/core/utils/currency_format.dart';
+import 'package:finly/core/utils/date_format.dart';
 import 'package:finly/features/expenses/presentation/providers/expenses_providers.dart';
 import 'package:finly/features/expenses/presentation/screens/expense_form_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-const _months = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-];
-
-String _shortDate(DateTime d) => '${_months[d.month - 1]} ${d.day}';
 
 class ExpenseListItem extends ConsumerWidget {
   const ExpenseListItem({required this.item, super.key});
@@ -23,6 +16,7 @@ class ExpenseListItem extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final cs = Theme.of(context).colorScheme;
     final expense = item.expense;
     final category = item.category;
     final account = item.account;
@@ -31,62 +25,42 @@ class ExpenseListItem extends ConsumerWidget {
     return Dismissible(
       key: ValueKey(expense.id),
       direction: DismissDirection.endToStart,
-      background: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        decoration: BoxDecoration(
-          color: AppColors.debit.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: AppColors.debit.withValues(alpha: 0.4),
-            width: 0.5,
-          ),
-        ),
-        child: const Icon(
-          Icons.delete_rounded,
-          color: AppColors.debit,
-          size: 22,
-        ),
-      ),
+      background: _deleteBackground(cs),
       confirmDismiss: (_) async => true,
       onDismissed: (_) async {
+        final undo = ExpensesCompanion.insert(
+          amountCentavos: expense.amountCentavos,
+          description: expense.description,
+          date: expense.date,
+          categoryId: expense.categoryId,
+          accountId: expense.accountId,
+        );
         await ref.read(expensesNotifierProvider.notifier).delete(expense.id);
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Expense deleted'),
-              action: SnackBarAction(
-                label: 'Undo',
-                onPressed: () => unawaited(
-                  ref.read(expensesNotifierProvider.notifier).add(
-                        ExpensesCompanion.insert(
-                          amountCentavos: expense.amountCentavos,
-                          description: expense.description,
-                          date: expense.date,
-                          categoryId: expense.categoryId,
-                          accountId: expense.accountId,
-                        ),
-                      ),
-                ),
-              ),
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: const Text('Expense deleted'),
+          action: SnackBarAction(
+            label: 'Undo',
+            onPressed: () => unawaited(
+              ref.read(expensesNotifierProvider.notifier).add(undo),
             ),
-          );
-        }
+          ),
+        ));
       },
       child: Material(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        color: cs.surface,
+        borderRadius: BorderRadius.circular(kRadius16),
         child: InkWell(
           onTap: () => Navigator.of(context).push(
             MaterialPageRoute<void>(
               builder: (_) => ExpenseFormScreen(initial: item),
             ),
           ),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(kRadius16),
           child: Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.border, width: 0.5),
+              borderRadius: BorderRadius.circular(kRadius16),
+              border: Border.all(color: cs.outline, width: 0.5),
             ),
             child: Row(
               children: [
@@ -96,8 +70,8 @@ class ExpenseListItem extends ConsumerWidget {
                   decoration: BoxDecoration(
                     color: color,
                     borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(16),
-                      bottomLeft: Radius.circular(16),
+                      topLeft: Radius.circular(kRadius16),
+                      bottomLeft: Radius.circular(kRadius16),
                     ),
                   ),
                 ),
@@ -107,7 +81,7 @@ class ExpenseListItem extends ConsumerWidget {
                   height: 36,
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(kRadius10),
                   ),
                   child: Icon(
                     IconData(
@@ -127,17 +101,17 @@ class ExpenseListItem extends ConsumerWidget {
                         expense.description,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: AppColors.textPrimary,
+                        style: TextStyle(
+                          color: cs.onSurface,
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '${account.name} · ${_shortDate(expense.date)}',
-                        style: const TextStyle(
-                          color: AppColors.textSecondary,
+                        '${account.name} · ${formatShortDate(expense.date)}',
+                        style: TextStyle(
+                          color: cs.onSurfaceVariant,
                           fontSize: 12,
                         ),
                       ),
@@ -148,8 +122,8 @@ class ExpenseListItem extends ConsumerWidget {
                   padding: const EdgeInsets.only(right: 16),
                   child: Text(
                     formatPeso(expense.amountCentavos),
-                    style: const TextStyle(
-                      color: AppColors.debit,
+                    style: TextStyle(
+                      color: cs.error,
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                     ),
@@ -163,3 +137,14 @@ class ExpenseListItem extends ConsumerWidget {
     );
   }
 }
+
+Widget _deleteBackground(ColorScheme cs) => Container(
+  alignment: Alignment.centerRight,
+  padding: const EdgeInsets.only(right: 20),
+  decoration: BoxDecoration(
+    color: cs.error.withValues(alpha: 0.15),
+    borderRadius: BorderRadius.circular(kRadius16),
+    border: Border.all(color: cs.error.withValues(alpha: 0.4), width: 0.5),
+  ),
+  child: Icon(Icons.delete_rounded, color: cs.error, size: 22),
+);

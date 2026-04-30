@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:finly/core/theme/app_colors.dart';
 import 'package:finly/features/scan/presentation/providers/scan_providers.dart';
 import 'package:flutter/material.dart';
 
@@ -24,6 +23,7 @@ class ScanProcessingView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final isError = state.status == ScanStatus.error;
     return Column(
       children: [
@@ -47,7 +47,7 @@ class ScanProcessingView extends StatelessWidget {
           _statusLabel,
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: isError ? AppColors.debit : AppColors.textSecondary,
+            color: isError ? cs.error : cs.onSurfaceVariant,
             fontSize: 15,
           ),
         ),

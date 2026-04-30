@@ -12,6 +12,7 @@ class AccountsSummaryCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final cs = Theme.of(context).colorScheme;
     final accountsAsync = ref.watch(accountsStreamProvider);
     final total = ref.watch(totalBalanceProvider);
 
@@ -25,9 +26,9 @@ class AccountsSummaryCard extends ConsumerWidget {
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.border, width: 0.5),
+          color: cs.surface,
+          borderRadius: BorderRadius.circular(kRadius20),
+          border: Border.all(color: cs.outline, width: 0.5),
         ),
         padding: const EdgeInsets.all(20),
         child: Row(
@@ -36,18 +37,15 @@ class AccountsSummaryCard extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Total Balance',
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 13,
-                    ),
+                    style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     formatPeso(total),
-                    style: const TextStyle(
-                      color: AppColors.credit,
+                    style: TextStyle(
+                      color: cs.primary,
                       fontSize: 24,
                       fontWeight: FontWeight.w700,
                       letterSpacing: -0.5,
@@ -57,8 +55,8 @@ class AccountsSummaryCard extends ConsumerWidget {
                   accountsAsync.maybeWhen(
                     data: (list) => Text(
                       '${list.length} accounts',
-                      style: const TextStyle(
-                        color: AppColors.textMuted,
+                      style: TextStyle(
+                        color: cs.onSurfaceVariant,
                         fontSize: 12,
                       ),
                     ),
@@ -70,12 +68,12 @@ class AccountsSummaryCard extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: AppColors.primaryContainer,
-                borderRadius: BorderRadius.circular(12),
+                color: cs.primaryContainer,
+                borderRadius: BorderRadius.circular(kRadius12),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.account_balance_wallet_rounded,
-                color: AppColors.primary,
+                color: cs.primary,
                 size: 20,
               ),
             ),

@@ -1,12 +1,15 @@
 import 'package:drift/drift.dart' show Value;
-import 'package:finly/ai/gemma_service_provider.dart';
+import 'package:finly/ai/gemma_service.dart';
 import 'package:finly/core/db/app_database.dart';
+import 'package:finly/features/ai_chat/data/models/parsed_expense.dart';
 import 'package:finly/features/ai_chat/data/services/expense_extractor.dart';
 import 'package:finly/features/expenses/presentation/providers/expenses_providers.dart';
 import 'package:finly/features/scan/data/services/receipt_analyzer_service.dart';
 import 'package:finly/features/scan/data/services/receipt_ocr_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+
+export 'package:finly/features/scan/data/models/scan_prefill.dart';
 
 enum ScanStatus {
   idle,

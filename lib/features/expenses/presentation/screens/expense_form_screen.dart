@@ -1,40 +1,18 @@
 import 'package:drift/drift.dart' show Value;
 import 'package:finly/core/db/app_database.dart';
 import 'package:finly/core/db/daos/expenses_dao.dart';
+import 'package:finly/core/utils/date_format.dart';
 import 'package:finly/features/expenses/presentation/providers/expenses_providers.dart';
+import 'package:finly/features/scan/data/models/scan_prefill.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-const _months = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-];
-
-String _formatDate(DateTime d) =>
-    '${_months[d.month - 1]} ${d.day}, ${d.year}';
+export 'package:finly/features/scan/data/models/scan_prefill.dart';
 
 // Parses "[type] desc" → (type, desc). Returns null if no match.
 (String, String)? _parseOther(String description) {
   final m = RegExp(r'^\[(.+?)\] (.*)$').firstMatch(description);
   return m != null ? (m.group(1)!, m.group(2)!) : null;
-}
-
-class ScanPrefill {
-  const ScanPrefill({
-    this.amountCentavos,
-    this.description,
-    this.categoryName,
-    this.accountName,
-    this.date,
-    this.receiptId,
-  });
-
-  final int? amountCentavos;
-  final String? description;
-  final String? categoryName;
-  final String? accountName;
-  final DateTime? date;
-  final int? receiptId;
 }
 
 class ExpenseFormScreen extends ConsumerStatefulWidget {
@@ -221,7 +199,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('Date'),
-              subtitle: Text(_formatDate(_date)),
+              subtitle: Text(formatDate(_date)),
               trailing: const Icon(Icons.calendar_today),
               onTap: _pickDate,
             ),

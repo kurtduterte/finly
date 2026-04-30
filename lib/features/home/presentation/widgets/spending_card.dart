@@ -14,16 +14,17 @@ class SpendingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(kRadius20),
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF0F2B1A), Color(0xFF0D1F2D)],
+          colors: [kCardGradientStart, kCardGradientEnd],
         ),
-        border: Border.all(color: AppColors.primaryContainer, width: 0.8),
+        border: Border.all(color: cs.primaryContainer, width: 0.8),
       ),
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -37,13 +38,13 @@ class SpendingCard extends StatelessWidget {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryContainer,
+                  color: cs.primaryContainer,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   monthLabel,
-                  style: const TextStyle(
-                    color: AppColors.primary,
+                  style: TextStyle(
+                    color: cs.primary,
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 0.5,
@@ -51,18 +52,14 @@ class SpendingCard extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              const Icon(
-                Icons.trending_down_rounded,
-                color: AppColors.primary,
-                size: 18,
-              ),
+              Icon(Icons.trending_down_rounded, color: cs.primary, size: 18),
             ],
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Total Spent',
             style: TextStyle(
-              color: AppColors.textSecondary,
+              color: cs.onSurfaceVariant,
               fontSize: 13,
               fontWeight: FontWeight.w400,
             ),
@@ -70,8 +67,8 @@ class SpendingCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             formatPeso(totalCentavos),
-            style: const TextStyle(
-              color: AppColors.textPrimary,
+            style: TextStyle(
+              color: cs.onSurface,
               fontSize: 36,
               fontWeight: FontWeight.w700,
               letterSpacing: -1,
@@ -81,5 +78,4 @@ class SpendingCard extends StatelessWidget {
       ),
     );
   }
-
 }

@@ -4,6 +4,7 @@ import 'package:finly/core/db/app_database.dart';
 import 'package:finly/features/ai_chat/presentation/providers/chat_notifier.dart';
 import 'package:finly/features/ai_chat/presentation/providers/chat_providers.dart';
 import 'package:finly/features/ai_chat/presentation/widgets/chat_input_row.dart';
+import 'package:finly/features/ai_chat/presentation/widgets/delete_chat_dialog.dart';
 import 'package:finly/features/ai_chat/presentation/widgets/message_list.dart';
 import 'package:finly/features/model_setup/presentation/providers/gemma_setup_notifier.dart';
 import 'package:flutter/material.dart';
@@ -55,25 +56,7 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
   }
 
   Future<void> _confirmAndDeleteChat(int convId) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete chat?'),
-        content: const Text(
-          'This will permanently delete the conversation and all its messages.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
+    final confirmed = await showDeleteChatDialog(context);
     if (confirmed != true || !mounted) return;
     await ref.read(chatNotifierProvider.notifier).deleteConversation(convId);
     if (mounted) Navigator.pop(context);

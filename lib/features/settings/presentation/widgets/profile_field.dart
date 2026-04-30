@@ -1,31 +1,36 @@
 import 'package:flutter/material.dart';
 
-class AuthFormField extends StatelessWidget {
-  const AuthFormField({
+class ProfileField extends StatelessWidget {
+  const ProfileField({
     required this.controller,
     required this.label,
-    required this.hint,
+    required this.icon,
     super.key,
-    this.obscureText = false,
+    this.readOnly = false,
+    this.maxLines = 1,
     this.keyboardType,
+    this.validator,
   });
 
   final TextEditingController controller;
   final String label;
-  final String hint;
-  final bool obscureText;
+  final IconData icon;
+  final bool readOnly;
+  final int maxLines;
   final TextInputType? keyboardType;
+  final String? Function(String?)? validator;
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
+    return TextFormField(
       controller: controller,
-      obscureText: obscureText,
+      readOnly: readOnly,
+      maxLines: maxLines,
       keyboardType: keyboardType,
+      validator: validator,
       decoration: InputDecoration(
         labelText: label,
-        hintText: hint,
-        border: const OutlineInputBorder(),
+        prefixIcon: Icon(icon),
       ),
     );
   }

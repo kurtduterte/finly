@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:finly/ai/gemma_service_provider.dart';
+import 'package:finly/ai/gemma_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

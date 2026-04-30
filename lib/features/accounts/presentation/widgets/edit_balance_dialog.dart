@@ -1,5 +1,4 @@
 import 'package:finly/core/db/app_database.dart';
-import 'package:finly/core/theme/app_colors.dart';
 import 'package:finly/features/accounts/presentation/providers/accounts_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -47,12 +46,13 @@ class _EditBalanceDialogState extends ConsumerState<EditBalanceDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return AlertDialog(
-      backgroundColor: AppColors.surfaceElevated,
+      backgroundColor: cs.surfaceContainerHighest,
       title: Text(
         widget.account.name,
-        style: const TextStyle(
-          color: AppColors.textPrimary,
+        style: TextStyle(
+          color: cs.onSurface,
           fontSize: 16,
           fontWeight: FontWeight.w600,
         ),
@@ -61,7 +61,7 @@ class _EditBalanceDialogState extends ConsumerState<EditBalanceDialog> {
         controller: _ctrl,
         autofocus: true,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        style: const TextStyle(color: AppColors.textPrimary),
+        style: TextStyle(color: cs.onSurface),
         decoration: const InputDecoration(
           labelText: 'Balance',
           prefixText: '₱ ',

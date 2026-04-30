@@ -2,22 +2,10 @@ import 'dart:convert';
 
 import 'package:finly/core/db/app_database.dart';
 import 'package:finly/core/db/daos/expenses_dao.dart';
+import 'package:finly/features/ai_chat/data/models/parsed_expense.dart';
 import 'package:flutter_gemma/flutter_gemma.dart';
 
-class ParsedExpense {
-  const ParsedExpense({
-    required this.amountCentavos,
-    required this.description,
-    required this.categoryName,
-    required this.accountName,
-    required this.date,
-  });
-  final int amountCentavos;
-  final String description;
-  final String categoryName;
-  final String accountName;
-  final DateTime date;
-}
+export 'package:finly/features/ai_chat/data/models/parsed_expense.dart';
 
 bool isAddExpenseIntent(String msg) {
   final lower = msg.toLowerCase();
@@ -29,9 +17,7 @@ bool isAddExpenseIntent(String msg) {
     'save expense',
     'track expense',
   ];
-  if (explicitPhrases.any(lower.contains)) {
-    return true;
-  }
+  if (explicitPhrases.any(lower.contains)) return true;
   if (['i spent', 'i paid', 'i bought'].any(lower.contains) &&
       RegExp(r'\d').hasMatch(lower)) {
     return true;

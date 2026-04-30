@@ -18,94 +18,59 @@ class SyncDownloadRepository {
     await _downloadExpenses(categoryIdMap, accountIdMap);
   }
 
-  /// Returns a map of {remoteId → local SQLite id} for every known category.
-  Future<Map<String, int>> _downloadCategories() async {
-    final remoteList = await remote.watchCategories().first;
-    final localList = await db.categoriesDao.getAll();
-
-    // Seed map with existing local records that already have a remoteId.
-    final idMap = {
-      for (final c in localList) if (c.remoteId != null) c.remoteId!: c.id,
-    };
-    final localByRemoteId = {
-      for (final c in localList) if (c.remoteId != null) c.remoteId!: c,
-    };
-
-    for (final rem in remoteList) {
-      final local = localByRemoteId[rem.remoteId];
-      if (local != null) {
-        idMap[rem.remoteId] = local.id;
-        if (rem.updatedAt.isAfter(local.updatedAt)) {
-          await db.categoriesDao.updateCategory(
-            local.copyWith(
-              name: rem.name,
-              iconCodepoint: rem.iconCodepoint,
-              color: rem.color,
-              updatedAt: rem.updatedAt,
-            ),
-          );
-        }
-      } else {
-        final id = await db.categoriesDao.insertCategory(
-          CategoriesCompanion(
-            name: Value(rem.name),
-            iconCodepoint: Value(rem.iconCodepoint),
-            color: Value(rem.color),
-            isDefault: Value(rem.isDefault),
-            remoteId: Value(rem.remoteId),
-            createdAt: Value(rem.createdAt),
-            updatedAt: Value(rem.updatedAt),
-          ),
-        );
-        idMap[rem.remoteId] = id;
-      }
-    }
-    return idMap;
+  Future<Map<String, int>> _downloadCategories() {
+    return _merge(
+      remoteItems: remote.watchCategories().first,
+      localItems: db.categoriesDao.getAll(),
+      localRemoteId: (l) => l.remoteId,
+      localId: (l) => l.id,
+      remoteId: (r) => r.remoteId,
+      remoteUpdatedAt: (r) => r.updatedAt,
+      localUpdatedAt: (l) => l.updatedAt,
+      onUpdate: (loc, rem) => db.categoriesDao.updateCategory(loc.copyWith(
+        name: rem.name,
+        iconCodepoint: rem.iconCodepoint,
+        color: rem.color,
+        updatedAt: rem.updatedAt,
+      )),
+      onInsert: (rem) => db.categoriesDao.insertCategory(CategoriesCompanion(
+        name: Value(rem.name),
+        iconCodepoint: Value(rem.iconCodepoint),
+        color: Value(rem.color),
+        isDefault: Value(rem.isDefault),
+        remoteId: Value(rem.remoteId),
+        createdAt: Value(rem.createdAt),
+        updatedAt: Value(rem.updatedAt),
+      )),
+    );
   }
 
-  /// Returns a map of {remoteId → local SQLite id} for every known account.
-  Future<Map<String, int>> _downloadAccounts() async {
-    final remoteList = await remote.watchAccounts().first;
-    final localList = await db.accountsDao.getAll();
-
-    final idMap = {
-      for (final a in localList) if (a.remoteId != null) a.remoteId!: a.id,
-    };
-    final localByRemoteId = {
-      for (final a in localList) if (a.remoteId != null) a.remoteId!: a,
-    };
-
-    for (final rem in remoteList) {
-      final local = localByRemoteId[rem.remoteId];
-      if (local != null) {
-        idMap[rem.remoteId] = local.id;
-        if (rem.updatedAt.isAfter(local.updatedAt)) {
-          await db.accountsDao.updateAccount(
-            local.copyWith(
-              name: rem.name,
-              type: rem.type,
-              balanceCentavos: rem.balanceCentavos,
-              color: rem.color,
-              updatedAt: rem.updatedAt,
-            ),
-          );
-        }
-      } else {
-        final id = await db.accountsDao.insertAccount(
-          AccountsCompanion(
-            name: Value(rem.name),
-            type: Value(rem.type),
-            balanceCentavos: Value(rem.balanceCentavos),
-            color: Value(rem.color),
-            remoteId: Value(rem.remoteId),
-            createdAt: Value(rem.createdAt),
-            updatedAt: Value(rem.updatedAt),
-          ),
-        );
-        idMap[rem.remoteId] = id;
-      }
-    }
-    return idMap;
+  Future<Map<String, int>> _downloadAccounts() {
+    return _merge(
+      remoteItems: remote.watchAccounts().first,
+      localItems: db.accountsDao.getAll(),
+      localRemoteId: (l) => l.remoteId,
+      localId: (l) => l.id,
+      remoteId: (r) => r.remoteId,
+      remoteUpdatedAt: (r) => r.updatedAt,
+      localUpdatedAt: (l) => l.updatedAt,
+      onUpdate: (loc, rem) => db.accountsDao.updateAccount(loc.copyWith(
+        name: rem.name,
+        type: rem.type,
+        balanceCentavos: rem.balanceCentavos,
+        color: rem.color,
+        updatedAt: rem.updatedAt,
+      )),
+      onInsert: (rem) => db.accountsDao.insertAccount(AccountsCompanion(
+        name: Value(rem.name),
+        type: Value(rem.type),
+        balanceCentavos: Value(rem.balanceCentavos),
+        color: Value(rem.color),
+        remoteId: Value(rem.remoteId),
+        createdAt: Value(rem.createdAt),
+        updatedAt: Value(rem.updatedAt),
+      )),
+    );
   }
 
   Future<void> _downloadExpenses(
@@ -121,36 +86,66 @@ class SyncDownloadRepository {
     for (final rem in remoteList) {
       final catId = categoryIdMap[rem.categoryRemoteId];
       final accId = accountIdMap[rem.accountRemoteId];
-      // If we don't have the referenced category or account locally, skip.
       if (catId == null || accId == null) continue;
 
       final local = localByRemoteId[rem.remoteId];
       if (local != null) {
         if (rem.updatedAt.isAfter(local.updatedAt)) {
-          await db.expensesDao.updateExpense(
-            local.copyWith(
-              amountCentavos: rem.amountCentavos,
-              description: rem.description,
-              date: rem.date,
-              categoryId: catId,
-              accountId: accId,
-              updatedAt: rem.updatedAt,
-            ),
-          );
+          await db.expensesDao.updateExpense(local.copyWith(
+            amountCentavos: rem.amountCentavos,
+            description: rem.description,
+            date: rem.date,
+            categoryId: catId,
+            accountId: accId,
+            updatedAt: rem.updatedAt,
+          ));
         }
       } else {
-        await db.expensesDao.insertExpense(
-          ExpensesCompanion(
-            amountCentavos: Value(rem.amountCentavos),
-            description: Value(rem.description),
-            date: Value(rem.date),
-            categoryId: Value(catId),
-            accountId: Value(accId),
-            remoteId: Value(rem.remoteId),
-            updatedAt: Value(rem.updatedAt),
-          ),
-        );
+        await db.expensesDao.insertExpense(ExpensesCompanion(
+          amountCentavos: Value(rem.amountCentavos),
+          description: Value(rem.description),
+          date: Value(rem.date),
+          categoryId: Value(catId),
+          accountId: Value(accId),
+          remoteId: Value(rem.remoteId),
+          updatedAt: Value(rem.updatedAt),
+        ));
       }
     }
+  }
+
+  Future<Map<String, int>> _merge<R, L>({
+    required Future<List<R>> remoteItems,
+    required Future<List<L>> localItems,
+    required String? Function(L) localRemoteId,
+    required int Function(L) localId,
+    required String Function(R) remoteId,
+    required DateTime Function(R) remoteUpdatedAt,
+    required DateTime Function(L) localUpdatedAt,
+    required Future<void> Function(L, R) onUpdate,
+    required Future<int> Function(R) onInsert,
+  }) async {
+    final remote = await remoteItems;
+    final local = await localItems;
+    final idMap = {
+      for (final l in local)
+        if (localRemoteId(l) != null) localRemoteId(l)!: localId(l),
+    };
+    final byRemoteId = {
+      for (final l in local)
+        if (localRemoteId(l) != null) localRemoteId(l)!: l,
+    };
+    for (final rem in remote) {
+      final loc = byRemoteId[remoteId(rem)];
+      if (loc != null) {
+        idMap[remoteId(rem)] = localId(loc);
+        if (remoteUpdatedAt(rem).isAfter(localUpdatedAt(loc))) {
+          await onUpdate(loc, rem);
+        }
+      } else {
+        idMap[remoteId(rem)] = await onInsert(rem);
+      }
+    }
+    return idMap;
   }
 }

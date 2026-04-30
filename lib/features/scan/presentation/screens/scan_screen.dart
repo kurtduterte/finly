@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:finly/core/theme/app_colors.dart';
 import 'package:finly/features/expenses/presentation/screens/expense_form_screen.dart';
 import 'package:finly/features/scan/presentation/providers/scan_providers.dart';
 import 'package:finly/features/scan/presentation/widgets/scan_action_buttons.dart';
@@ -13,22 +12,23 @@ class ScanScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final cs = Theme.of(context).colorScheme;
     ref.listen(scanStateProvider, (_, next) {
       if (next.status == ScanStatus.done) {
         unawaited(
           Navigator.of(context).push(
             MaterialPageRoute<void>(
               builder: (_) => ExpenseFormScreen(
-              prefill: next.parsedExpense != null
-                  ? ScanPrefill(
-                      amountCentavos: next.parsedExpense!.amountCentavos,
-                      description: next.parsedExpense!.description,
-                      categoryName: next.parsedExpense!.categoryName,
-                      accountName: next.parsedExpense!.accountName,
-                      date: next.parsedExpense!.date,
-                      receiptId: next.receiptId,
-                    )
-                  : null,
+                prefill: next.parsedExpense != null
+                    ? ScanPrefill(
+                        amountCentavos: next.parsedExpense!.amountCentavos,
+                        description: next.parsedExpense!.description,
+                        categoryName: next.parsedExpense!.categoryName,
+                        accountName: next.parsedExpense!.accountName,
+                        date: next.parsedExpense!.date,
+                        receiptId: next.receiptId,
+                      )
+                    : null,
               ),
             ),
           ).then((_) {
@@ -49,21 +49,18 @@ class ScanScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 20),
-            const Text(
+            Text(
               'Scan Receipt',
               style: TextStyle(
-                color: AppColors.textPrimary,
+                color: cs.onSurface,
                 fontSize: 26,
                 fontWeight: FontWeight.w700,
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'Photo → AI → expense entry',
-              style: TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 14,
-              ),
+              style: TextStyle(color: cs.onSurfaceVariant, fontSize: 14),
             ),
             const SizedBox(height: 32),
             if (isProcessing)

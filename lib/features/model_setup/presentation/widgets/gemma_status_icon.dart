@@ -1,4 +1,3 @@
-import 'package:finly/core/theme/app_colors.dart';
 import 'package:finly/features/model_setup/presentation/providers/gemma_setup_notifier.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,18 +7,16 @@ class GemmaStatusIcon extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final cs = Theme.of(context).colorScheme;
     final state = ref.watch(gemmaSetupProvider);
     return switch (state) {
-      GemmaSetupReady() => const Tooltip(
+      GemmaSetupReady() => Tooltip(
           message: 'AI ready',
-          child: Icon(Icons.psychology_rounded, color: AppColors.primary),
+          child: Icon(Icons.psychology_rounded, color: cs.primary),
         ),
       GemmaSetupError(:final message) => Tooltip(
           message: message,
-          child: const Icon(
-            Icons.error_outline_rounded,
-            color: AppColors.debit,
-          ),
+          child: Icon(Icons.error_outline_rounded, color: cs.error),
         ),
       GemmaSetupIdle() => const SizedBox(
           width: 24,

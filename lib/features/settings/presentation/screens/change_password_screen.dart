@@ -1,4 +1,6 @@
 import 'package:finly/features/auth/presentation/providers/auth_providers.dart';
+import 'package:finly/features/settings/presentation/widgets/password_field.dart';
+import 'package:finly/features/settings/presentation/widgets/security_banner.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -48,9 +50,8 @@ class _ChangePasswordScreenState
     } on Exception catch (e) {
       if (mounted) {
         final msg = e.toString().replaceFirst('Exception: ', '');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg)),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(msg)));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -59,8 +60,6 @@ class _ChangePasswordScreenState
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-
     return Scaffold(
       appBar: AppBar(title: const Text('Change Password')),
       body: Form(
@@ -68,9 +67,9 @@ class _ChangePasswordScreenState
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            _SecurityBanner(cs: cs),
+            const SecurityBanner(),
             const SizedBox(height: 24),
-            _PasswordField(
+            PasswordField(
               controller: _currentCtrl,
               label: 'Current password',
               obscure: _currentObscure,
@@ -81,7 +80,7 @@ class _ChangePasswordScreenState
                   : null,
             ),
             const SizedBox(height: 12),
-            _PasswordField(
+            PasswordField(
               controller: _newCtrl,
               label: 'New password',
               obscure: _newObscure,
@@ -93,7 +92,7 @@ class _ChangePasswordScreenState
               },
             ),
             const SizedBox(height: 12),
-            _PasswordField(
+            PasswordField(
               controller: _confirmCtrl,
               label: 'Confirm new password',
               obscure: _confirmObscure,
@@ -117,91 +116,6 @@ class _ChangePasswordScreenState
                   : const Text('Change password'),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SecurityBanner extends StatelessWidget {
-  const _SecurityBanner({required this.cs});
-
-  final ColorScheme cs;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: cs.primaryContainer,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.shield_outlined, color: cs.primary, size: 20),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Secure operation',
-                  style: TextStyle(
-                    color: cs.onPrimaryContainer,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Your current password is required to verify your identity '
-                  'before making this change. Finly never stores passwords — '
-                  'this is handled securely by Firebase Authentication.',
-                  style: TextStyle(
-                    color: cs.onPrimaryContainer,
-                    fontSize: 13,
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PasswordField extends StatelessWidget {
-  const _PasswordField({
-    required this.controller,
-    required this.label,
-    required this.obscure,
-    required this.onToggle,
-    this.validator,
-  });
-
-  final TextEditingController controller;
-  final String label;
-  final bool obscure;
-  final VoidCallback onToggle;
-  final String? Function(String?)? validator;
-
-  @override
-  Widget build(BuildContext context) {
-    return TextFormField(
-      controller: controller,
-      obscureText: obscure,
-      validator: validator,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: const Icon(Icons.lock_outline_rounded),
-        suffixIcon: IconButton(
-          icon: Icon(
-            obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-          ),
-          onPressed: onToggle,
         ),
       ),
     );

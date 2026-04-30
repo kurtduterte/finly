@@ -14,6 +14,7 @@ class QuickActions extends StatelessWidget {
           child: _ActionButton(
             icon: Icons.add_rounded,
             label: 'Add Expense',
+            accent: true,
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
                 builder: (_) => const ExpenseFormScreen(),
@@ -42,7 +43,7 @@ class _ActionButton extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.onTap,
-    this.accent = true,
+    required this.accent,
   });
 
   final IconData icon;
@@ -52,35 +53,31 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final bgColor = accent ? cs.primaryContainer : cs.surfaceContainerHighest;
+    final borderColor = accent ? cs.inversePrimary : cs.outline;
+    final fgColor = accent ? cs.primary : cs.onSurfaceVariant;
+
     return Material(
-      color: accent ? AppColors.primaryContainer : AppColors.surfaceElevated,
-      borderRadius: BorderRadius.circular(14),
+      color: bgColor,
+      borderRadius: BorderRadius.circular(kRadius14),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(kRadius14),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 14),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: accent ? AppColors.primaryDark : AppColors.border,
-              width: 0.5,
-            ),
+            borderRadius: BorderRadius.circular(kRadius14),
+            border: Border.all(color: borderColor, width: 0.5),
           ),
           child: Column(
             children: [
-              Icon(
-                icon,
-                color: accent ? AppColors.primary : AppColors.textSecondary,
-                size: 22,
-              ),
+              Icon(icon, color: fgColor, size: 22),
               const SizedBox(height: 6),
               Text(
                 label,
                 style: TextStyle(
-                  color: accent
-                      ? AppColors.primary
-                      : AppColors.textSecondary,
+                  color: fgColor,
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                 ),
