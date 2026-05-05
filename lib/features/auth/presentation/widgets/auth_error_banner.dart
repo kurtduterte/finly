@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class AuthErrorBanner extends StatelessWidget {
@@ -16,7 +17,10 @@ class AuthErrorBanner extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
-        error.toString(),
+        switch (error) {
+          final FirebaseAuthException e => e.message ?? e.code,
+          _ => error.toString(),
+        },
         style: TextStyle(color: colorScheme.onErrorContainer),
       ),
     );

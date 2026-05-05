@@ -1,6 +1,7 @@
 String formatPeso(int centavos) {
   final amount = centavos / 100;
-  final parts = amount.toStringAsFixed(2).split('.');
+  final negative = amount < 0;
+  final parts = amount.abs().toStringAsFixed(2).split('.');
   final whole = parts[0];
   final dec = parts[1];
   final buf = StringBuffer();
@@ -8,5 +9,5 @@ String formatPeso(int centavos) {
     if (i > 0 && (whole.length - i) % 3 == 0) buf.write(',');
     buf.write(whole[i]);
   }
-  return '₱$buf.$dec';
+  return '${negative ? '-' : ''}₱$buf.$dec';
 }

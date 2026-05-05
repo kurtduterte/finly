@@ -27,7 +27,7 @@ class FirebaseAuthDatasource {
   final GoogleSignIn _googleSignIn;
 
   Stream<AuthUser?> get authStateChanges =>
-      _auth.authStateChanges().map((u) => u == null ? null : _toModel(u));
+      _auth.userChanges().map((u) => u == null ? null : _toModel(u));
 
   Future<AuthUser> signInWithEmail({
     required String email,
