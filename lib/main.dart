@@ -6,18 +6,26 @@ import 'package:finly/features/home/presentation/screens/main_shell.dart';
 import 'package:finly/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gemma/flutter_gemma.dart';
+import 'package:flutter_gemma/flutter_gemma.dart'
+    if (dart.library.html) 'package:finly/core/stubs/flutter_gemma_stub.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await FlutterGemma.initialize();
+  try {
+    await FlutterGemma.initialize();
+  } on Exception catch (_) {
+    // Non-fatal: Gemma may not be supported on this device.
+  }
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
   } on FirebaseException catch (e) {
     if (e.code != 'duplicate-app') rethrow;
+  } on Exception catch (_) {
+    // Firebase failed for an unexpected reason — UI will surface the error
+    // via authStateProvider rather than crashing before runApp().
   }
   runApp(const ProviderScope(child: FinlyApp()));
 }

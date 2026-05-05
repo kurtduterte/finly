@@ -2,9 +2,10 @@ import 'package:finly/features/expenses/presentation/screens/expenses_screen.dar
 import 'package:finly/features/home/presentation/screens/home_screen.dart';
 import 'package:finly/features/scan/presentation/screens/scan_screen.dart';
 import 'package:finly/features/settings/presentation/screens/settings_screen.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
-const _destinations = [
+const _allDestinations = [
   NavigationDestination(
     icon: Icon(Icons.home_outlined),
     selectedIcon: Icon(Icons.home_rounded),
@@ -27,12 +28,23 @@ const _destinations = [
   ),
 ];
 
-const List<Widget> _pages = [
+const List<Widget> _allPages = [
   HomeScreen(),
   ExpensesScreen(),
   ScanScreen(),
   SettingsScreen(),
 ];
+
+// Scan tab is index 2 — not available on web.
+final _destinations =
+    kIsWeb
+        ? [_allDestinations[0], _allDestinations[1], _allDestinations[3]]
+        : _allDestinations;
+
+final List<Widget> _pages =
+    kIsWeb
+        ? [_allPages[0], _allPages[1], _allPages[3]]
+        : _allPages;
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});

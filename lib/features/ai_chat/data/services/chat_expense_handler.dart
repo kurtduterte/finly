@@ -21,23 +21,32 @@ class ChatExpenseHandler {
   }) async {
     final categories = await expRepo.getAllCategories();
     final accounts = await expRepo.getAllAccounts();
+    final now = DateTime.now();
 
-    final messages = buildExpenseExtractionPrompt(
-      userMessage: userMessage,
-      categories: categories,
-      accounts: accounts,
-      today: DateTime.now(),
-    );
+    // Fast path: regex extraction — no LLM needed for simple patterns.
+    var parsed = tryRuleBasedExtract(userMessage, now);
 
-    final buffer = StringBuffer();
-    await for (final token in gemma.streamMessages(messages)) {
+    // Slow path: ask Gemma to extract structured data.
+    if (parsed == null) {
+      final messages = buildExpenseExtractionPrompt(
+        userMessage: userMessage,
+        categories: categories,
+        accounts: accounts,
+        today: now,
+      );
+      final buffer = StringBuffer();
+      await for (final token in gemma.streamMessages(messages)) {
+        if (isCancelled()) return '';
+        buffer.write(token);
+        onToken(buffer.toString());
+      }
       if (isCancelled()) return '';
-      buffer.write(token);
-      onToken(buffer.toString());
+      parsed = parseExpenseResponse(
+        buffer.toString(),
+        fallbackDescription: userMessage,
+      );
     }
-    if (isCancelled()) return '';
 
-    final parsed = parseExpenseResponse(buffer.toString());
     if (parsed == null) {
       return "Sorry, I couldn't extract the expense details. "
           'Try: "Add expense ₱150 for lunch"';

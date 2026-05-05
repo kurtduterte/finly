@@ -1,9 +1,9 @@
 import 'dart:convert';
 
+import 'package:finly/ai/ai_message.dart';
 import 'package:finly/core/db/app_database.dart';
 import 'package:finly/core/db/daos/expenses_dao.dart';
 import 'package:finly/features/ai_chat/data/models/parsed_expense.dart';
-import 'package:flutter_gemma/flutter_gemma.dart';
 
 export 'package:finly/features/ai_chat/data/models/parsed_expense.dart';
 
@@ -30,7 +30,7 @@ bool isAddExpenseIntent(String msg) {
   return false;
 }
 
-List<Message> buildExpenseExtractionPrompt({
+List<AiMessage> buildExpenseExtractionPrompt({
   required String userMessage,
   required List<Category> categories,
   required List<Account> accounts,
@@ -43,25 +43,40 @@ List<Message> buildExpenseExtractionPrompt({
   final todayStr = '${today.year}-$mm-$dd';
 
   final prompt =
-      'Extract expense details. Respond ONLY with JSON, no other text:\n'
-      '{"amount":0.00,"description":"","category":"",'
-      '"account":"","date":""}\n\n'
+      'Extract expense details from the user message. '
+      'Respond ONLY with JSON, no other text.\n'
+      'Rules:\n'
+      '- amount: the number (e.g. 200, 150.50)\n'
+      '- description: merchant, vendor, or item name '
+      '(e.g. "mcdo"→"McDonald\'s", "jollibee"→"Jollibee", '
+      '"lunch"→"Lunch"). REQUIRED — never leave empty.\n'
+      '- category: best match from the list, or "Other"\n'
+      '- account: best match from the list, or "Cash"\n'
+      '- date: YYYY-MM-DD, use today if not mentioned\n\n'
+      'Example: "add expense 200 mcdo" → '
+      '{"amount":200.00,"description":"McDonald\'s",'
+      '"category":"Food","account":"Cash","date":"$todayStr"}\n\n'
       'Categories: $catNames\n'
       'Accounts: $accNames\n'
-      'Today: $todayStr (use if no date mentioned). '
-      'Default category: Other. Default account: Cash.\n\n'
+      'Today: $todayStr\n\n'
       'User: $userMessage';
-  return [Message.text(text: prompt)];
+  return [AiMessage(text: prompt)];
 }
 
-ParsedExpense? parseExpenseResponse(String response) {
+ParsedExpense? parseExpenseResponse(
+  String response, {
+  String fallbackDescription = '',
+}) {
   final match = RegExp(r'\{[^{}]+\}').firstMatch(response);
   if (match == null) return null;
   try {
     final data = jsonDecode(match.group(0)!) as Map<String, dynamic>;
     final amountRaw = data['amount'] as num?;
     if (amountRaw == null || amountRaw <= 0) return null;
-    final description = (data['description'] as String?)?.trim() ?? '';
+    final description =
+        (data['description'] as String?)?.trim().isNotEmpty == true
+            ? (data['description'] as String).trim()
+            : fallbackDescription;
     if (description.isEmpty) return null;
     final categoryName = (data['category'] as String?)?.trim() ?? 'Other';
     final accountName = (data['account'] as String?)?.trim() ?? 'Cash';
@@ -78,6 +93,36 @@ ParsedExpense? parseExpenseResponse(String response) {
   } on FormatException {
     return null;
   }
+}
+
+/// Fast rule-based extractor for simple patterns — no LLM needed.
+/// Handles: "add expense 200 mcdo", "log expense ₱150 for lunch", etc.
+ParsedExpense? tryRuleBasedExtract(String msg, DateTime today) {
+  final explicit = RegExp(
+    r'(?:add|log|record|new|save|track)\s+expense\s+'
+    r'[₱]?(\d+(?:\.\d{1,2})?)'
+    r'(?:\s+(?:for|at|on|from))?\s+(.+)',
+    caseSensitive: false,
+  );
+  final implicit = RegExp(
+    r'i\s+(?:spent|paid|bought)\s+'
+    r'[₱]?(\d+(?:\.\d{1,2})?)'
+    r'(?:\s+(?:for|at|on|from))?\s+(.+)',
+    caseSensitive: false,
+  );
+  final m = explicit.firstMatch(msg.trim()) ?? implicit.firstMatch(msg.trim());
+  if (m == null) return null;
+  final amount = double.tryParse(m.group(1)!);
+  if (amount == null || amount <= 0) return null;
+  final desc = m.group(2)!.trim();
+  if (desc.isEmpty) return null;
+  return ParsedExpense(
+    amountCentavos: (amount * 100).round(),
+    description: desc,
+    categoryName: 'Other',
+    accountName: 'Cash',
+    date: today,
+  );
 }
 
 Category? matchCategory(List<Category> cats, String name) {
