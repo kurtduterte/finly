@@ -43,6 +43,7 @@ dependencies:
   google_sign_in: ^6.2.1
   image_picker: ^1.1.2
   json_annotation: ^4.11.0
+  mobile_scanner: ^6.0.2
   path_provider: ^2.1.5
   shared_preferences: ^2.3.3
   uuid: ^4.5.1

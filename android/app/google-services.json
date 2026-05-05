@@ -12,15 +12,32 @@
           "package_name": "com.finly.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "758004605511-akr74rleata3nbn43kl3m3sp53a90mcr.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "REDACTED_ANDROID_API_KEY"
+          "current_key": "AIzaSyAge9z_E-pPYv4tXvp0rM9q4lRGKo79QNw"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "758004605511-akr74rleata3nbn43kl3m3sp53a90mcr.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "758004605511-negg8qle82dfhh6ft9grva94ajpt75s8.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.finly"
+              }
+            }
+          ]
         }
       }
     }
