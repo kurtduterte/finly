@@ -1,6 +1,9 @@
 import 'package:finly/features/auth/data/models/auth_user.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:google_sign_in/google_sign_in.dart';
+
+const _kGoogleWebClientId = String.fromEnvironment('GOOGLE_WEB_CLIENT_ID');
 
 class _SignInCancelledException implements Exception {
   const _SignInCancelledException();
@@ -21,10 +24,17 @@ class FirebaseAuthDatasource {
     FirebaseAuth? auth,
     GoogleSignIn? googleSignIn,
   })  : _auth = auth ?? FirebaseAuth.instance,
-        _googleSignIn = googleSignIn ?? GoogleSignIn();
+        _googleSignIn = googleSignIn ?? _buildGoogleSignIn();
 
   final FirebaseAuth _auth;
   final GoogleSignIn _googleSignIn;
+
+  static GoogleSignIn _buildGoogleSignIn() {
+    if (kIsWeb && _kGoogleWebClientId.isNotEmpty) {
+      return GoogleSignIn(clientId: _kGoogleWebClientId);
+    }
+    return GoogleSignIn();
+  }
 
   Stream<AuthUser?> get authStateChanges =>
       _auth.userChanges().map((u) => u == null ? null : _toModel(u));
@@ -52,6 +62,12 @@ class FirebaseAuthDatasource {
   }
 
   Future<AuthUser> signInWithGoogle() async {
+    if (kIsWeb && _kGoogleWebClientId.isEmpty) {
+      throw UnsupportedError(
+        'Missing GOOGLE_WEB_CLIENT_ID for web Google sign-in. Set it in '
+        '.env.json and run with --dart-define-from-file=.env.json.',
+      );
+    }
     final account = await _googleSignIn.signIn();
     if (account == null) throw const _SignInCancelledException();
 

@@ -34,7 +34,16 @@ part 'seed_data.dart';
   ],
 )
 class AppDatabase extends _$AppDatabase {
-  AppDatabase() : super(driftDatabase(name: 'finly_db'));
+  AppDatabase()
+      : super(
+          driftDatabase(
+            name: 'finly_db',
+            web: DriftWebOptions(
+              sqlite3Wasm: Uri.parse('sqlite3.wasm'),
+              driftWorker: Uri.parse('drift_worker.js'),
+            ),
+          ),
+        );
 
   @override
   int get schemaVersion => 6;

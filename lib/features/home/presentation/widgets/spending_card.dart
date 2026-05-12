@@ -15,16 +15,21 @@ class SpendingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final isLightMode = cs.brightness == Brightness.light;
+    final gradientColors = isLightMode
+        ? [cs.surface, cs.surfaceContainerHighest]
+        : [kCardGradientStart, kCardGradientEnd];
+    final borderColor = isLightMode ? cs.outline : cs.primaryContainer;
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(kRadius20),
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [kCardGradientStart, kCardGradientEnd],
+          colors: gradientColors,
         ),
-        border: Border.all(color: cs.primaryContainer, width: 0.8),
+        border: Border.all(color: borderColor, width: 0.8),
       ),
       padding: const EdgeInsets.all(24),
       child: Column(

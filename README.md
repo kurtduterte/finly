@@ -2,7 +2,7 @@
 
 Finly is an offline-first personal finance tracker that makes expense logging effortless. Most people know they're spending money but have no clear picture of where it actually goes — manually entering every purchase is tedious, so it never happens consistently.
 
-Finly solves this by letting you photograph a receipt and having an on-device AI (Gemma 3) extract the expense automatically. No cloud, no subscription, no data leaving your phone.
+Finly solves this by letting you photograph a receipt and having an on-device AI (Gemma 3) extract the expense automatically. On mobile, this stays local; on web, Gemma is called through a configured server API.
 
 ## Main Features
 

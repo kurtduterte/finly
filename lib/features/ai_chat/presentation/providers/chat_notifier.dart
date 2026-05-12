@@ -50,7 +50,12 @@ class ChatNotifier extends Notifier<ChatState> {
 
     try {
       if (isAddExpenseIntent(text)) {
-        await _handleAddExpense(text, convId, repo);
+        await _handleAddExpense(
+          text,
+          convId,
+          repo,
+          contextMessage: _latestUserMessage(history),
+        );
       } else {
         final aiText = await _streamConversation(text, history, convId);
         if (state.conversationId != convId) return;
@@ -97,8 +102,9 @@ class ChatNotifier extends Notifier<ChatState> {
   Future<void> _handleAddExpense(
     String userMessage,
     int convId,
-    ChatRepository repo,
-  ) async {
+    ChatRepository repo, {
+    String? contextMessage,
+  }) async {
     final handler = ChatExpenseHandler(
       gemma: ref.read(gemmaServiceProvider),
       expRepo: ref.read(expensesRepositoryProvider),
@@ -106,6 +112,7 @@ class ChatNotifier extends Notifier<ChatState> {
 
     final aiMessage = await handler.handle(
       userMessage: userMessage,
+      contextMessage: contextMessage,
       onToken: (buf) {
         if (state.conversationId == convId) {
           state = state.copyWith(streamingBuffer: buf);
@@ -121,6 +128,12 @@ class ChatNotifier extends Notifier<ChatState> {
     );
   }
 
+  String? _latestUserMessage(List<ChatMessage> history) {
+    for (final msg in history.reversed) {
+      if (msg.isUser == 1) return msg.messageText;
+    }
+    return null;
+  }
 }
 
 final chatNotifierProvider = NotifierProvider<ChatNotifier, ChatState>(

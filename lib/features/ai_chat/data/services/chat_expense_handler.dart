@@ -18,18 +18,28 @@ class ChatExpenseHandler {
     required String userMessage,
     required void Function(String buffer) onToken,
     required bool Function() isCancelled,
+    String? contextMessage,
   }) async {
     final categories = await expRepo.getAllCategories();
     final accounts = await expRepo.getAllAccounts();
     final now = DateTime.now();
+    final extractionInput = _pickExtractionInput(userMessage, contextMessage);
 
     // Fast path: regex extraction — no LLM needed for simple patterns.
     var parsed = tryRuleBasedExtract(userMessage, now);
+    parsed ??= extractionInput == userMessage
+        ? null
+        : tryRuleBasedExtract(extractionInput, now);
+
+    if (parsed == null && !hasAmountHint(extractionInput)) {
+      return 'Please include an amount and description, '
+          'like: "coffee 260 lunch"';
+    }
 
     // Slow path: ask Gemma to extract structured data.
     if (parsed == null) {
       final messages = buildExpenseExtractionPrompt(
-        userMessage: userMessage,
+        userMessage: extractionInput,
         categories: categories,
         accounts: accounts,
         today: now,
@@ -43,7 +53,7 @@ class ChatExpenseHandler {
       if (isCancelled()) return '';
       parsed = parseExpenseResponse(
         buffer.toString(),
-        fallbackDescription: userMessage,
+        fallbackDescription: extractionInput,
       );
     }
 
@@ -79,5 +89,14 @@ class ChatExpenseHandler {
     return '✅ Expense saved!\n'
         '₱$amount – ${parsed.description}\n'
         '${category.name} · ${account.name}';
+  }
+
+  String _pickExtractionInput(String userMessage, String? contextMessage) {
+    if (hasAmountHint(userMessage)) return userMessage;
+    final context = contextMessage?.trim();
+    if (context != null && context.isNotEmpty && hasAmountHint(context)) {
+      return context;
+    }
+    return userMessage;
   }
 }

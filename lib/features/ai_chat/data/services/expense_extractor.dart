@@ -23,12 +23,15 @@ bool isAddExpenseIntent(String msg) {
     return true;
   }
   if (['add', 'log', 'record'].any(lower.contains) &&
-      (lower.contains('₱') ||
-          RegExp(r'\d+\s*(pesos?|php)').hasMatch(lower))) {
+      (lower.contains('₱') || RegExp(r'\d+\s*(pesos?|php)').hasMatch(lower))) {
     return true;
   }
+  if (_looksLikeQuickExpenseEntry(lower)) return true;
   return false;
 }
+
+bool hasAmountHint(String msg) =>
+    RegExp(r'[₱]?\s*\d+(?:[.,]\d{1,2})?').hasMatch(msg);
 
 List<AiMessage> buildExpenseExtractionPrompt({
   required String userMessage,
@@ -71,12 +74,16 @@ ParsedExpense? parseExpenseResponse(
   if (match == null) return null;
   try {
     final data = jsonDecode(match.group(0)!) as Map<String, dynamic>;
-    final amountRaw = data['amount'] as num?;
-    if (amountRaw == null || amountRaw <= 0) return null;
+    final amount = _parseAmount(data['amount']);
+    if (amount == null || !amount.isFinite || amount <= 0) return null;
+    final centavosDouble = amount * 100;
+    if (!centavosDouble.isFinite || centavosDouble > _sqliteInt64Max) {
+      return null;
+    }
     final description =
         (data['description'] as String?)?.trim().isNotEmpty == true
-            ? (data['description'] as String).trim()
-            : fallbackDescription;
+        ? (data['description'] as String).trim()
+        : fallbackDescription;
     if (description.isEmpty) return null;
     final categoryName = (data['category'] as String?)?.trim() ?? 'Other';
     final accountName = (data['account'] as String?)?.trim() ?? 'Cash';
@@ -84,7 +91,7 @@ ParsedExpense? parseExpenseResponse(
     final date =
         (dateStr != null ? DateTime.tryParse(dateStr) : null) ?? DateTime.now();
     return ParsedExpense(
-      amountCentavos: (amountRaw.toDouble() * 100).round(),
+      amountCentavos: centavosDouble.round(),
       description: description,
       categoryName: categoryName,
       accountName: accountName,
@@ -98,23 +105,33 @@ ParsedExpense? parseExpenseResponse(
 /// Fast rule-based extractor for simple patterns — no LLM needed.
 /// Handles: "add expense 200 mcdo", "log expense ₱150 for lunch", etc.
 ParsedExpense? tryRuleBasedExtract(String msg, DateTime today) {
-  final explicit = RegExp(
-    r'(?:add|log|record|new|save|track)\s+expense\s+'
-    r'[₱]?(\d+(?:\.\d{1,2})?)'
-    r'(?:\s+(?:for|at|on|from))?\s+(.+)',
-    caseSensitive: false,
-  );
-  final implicit = RegExp(
-    r'i\s+(?:spent|paid|bought)\s+'
-    r'[₱]?(\d+(?:\.\d{1,2})?)'
-    r'(?:\s+(?:for|at|on|from))?\s+(.+)',
-    caseSensitive: false,
-  );
-  final m = explicit.firstMatch(msg.trim()) ?? implicit.firstMatch(msg.trim());
+  final normalized = msg.trim();
+  final m = RegExp(r'[₱]?\s*(\d+(?:[.,]\d{1,2})?)').firstMatch(normalized);
   if (m == null) return null;
-  final amount = double.tryParse(m.group(1)!);
+  final amount = double.tryParse(m.group(1)!.replaceAll(',', ''));
   if (amount == null || amount <= 0) return null;
-  final desc = m.group(2)!.trim();
+  var desc = normalized
+      .replaceFirst(m.group(0)!, ' ')
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .trim();
+  desc = desc
+      .replaceFirst(
+        RegExp(
+          r'^(?:add|log|record|new|save|track)\s+expense\b',
+          caseSensitive: false,
+        ),
+        '',
+      )
+      .trim();
+  desc = desc
+      .replaceFirst(
+        RegExp(r'^i\s+(?:spent|paid|bought)\b', caseSensitive: false),
+        '',
+      )
+      .trim();
+  desc = desc
+      .replaceFirst(RegExp(r'^(?:for|at|on|from)\s+', caseSensitive: false), '')
+      .trim();
   if (desc.isEmpty) return null;
   return ParsedExpense(
     amountCentavos: (amount * 100).round(),
@@ -159,4 +176,42 @@ String buildExpenseContext(List<ExpenseWithDetails> expenses) {
     );
   }
   return sb.toString().trimRight();
+}
+
+bool _looksLikeQuickExpenseEntry(String lower) {
+  if (!hasAmountHint(lower)) return false;
+  if (lower.contains('?')) return false;
+  const notExpenseHints = [
+    'income',
+    'salary',
+    'budget',
+    'balance',
+    'account',
+    'saving',
+    'debt',
+    'total',
+    'how much',
+  ];
+  if (notExpenseHints.any(lower.contains)) return false;
+  final withoutAmount = lower.replaceFirst(
+    RegExp(r'[₱]?\s*\d+(?:[.,]\d{1,2})?'),
+    '',
+  );
+  final words =
+      withoutAmount
+          .replaceAll(RegExp(r'[^a-z\s]'), ' ')
+          .trim()
+          .split(RegExp(r'\s+'))
+        ..removeWhere((w) => w.isEmpty);
+  return words.isNotEmpty && words.length <= 5;
+}
+
+const int _sqliteInt64Max = 9223372036854775807;
+
+double? _parseAmount(Object? value) {
+  if (value is num) return value.toDouble();
+  if (value is String) {
+    return double.tryParse(value.replaceAll(',', '').trim());
+  }
+  return null;
 }

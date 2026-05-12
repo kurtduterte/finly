@@ -15,7 +15,7 @@ run-android: .pub-cache-stamp
 	flutter run -d android --dart-define-from-file=.env.json
 
 run-web: .pub-cache-stamp
-	flutter run -d chrome --dart-define-from-file=.env.json
+	flutter run -d web-server --web-port=3000 --dart-define-from-file=.env.json
 
 # Bootstrap dev environment (run once after cloning)
 setup:
