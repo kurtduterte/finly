@@ -30,38 +30,41 @@ class GemmaService {
     if (!File(path).existsSync()) {
       throw Exception('Model file not found.\nRun: make push-model');
     }
-    await FlutterGemma.installModel(modelType: ModelType.gemmaIt)
-        .fromFile(path)
-        .withProgress((p) => onProgress?.call(p / 100))
-        .install();
+    await FlutterGemma.installModel(
+      modelType: ModelType.gemmaIt,
+    ).fromFile(path).withProgress((p) => onProgress?.call(p / 100)).install();
+  }
+
+  Future<InferenceModel> _activeModel() async {
+    _model ??= await FlutterGemma.getActiveModel();
+    return _model!;
+  }
+
+  Future<String> _collectTokens(Stream<String> tokens) async {
+    final chunks = await tokens.toList();
+    return chunks.join();
   }
 
   Future<String?> generateResponse(String prompt) async {
-    _model ??= await FlutterGemma.getActiveModel();
-    final chat = await _model!.createChat();
-    await chat.addQueryChunk(Message.text(text: prompt));
-    final buffer = StringBuffer();
-    await for (final token in chat.generateChatResponseAsync()) {
-      if (token is TextResponse) buffer.write(token.token);
-    }
-    return buffer.toString();
+    final tokens = streamResponse(prompt);
+    final response = await _collectTokens(tokens);
+    if (response.isEmpty) return null;
+    return response;
   }
 
-  Stream<String> streamResponse(String prompt) async* {
-    _model ??= await FlutterGemma.getActiveModel();
-    final chat = await _model!.createChat();
-    await chat.addQueryChunk(Message.text(text: prompt));
-    await for (final token in chat.generateChatResponseAsync()) {
-      if (token is TextResponse) yield token.token;
-    }
+  Stream<String> streamResponse(String prompt) {
+    return streamMessages([AiMessage(text: prompt)]);
   }
 
   Stream<String> streamMessages(List<AiMessage> messages) async* {
-    _model ??= await FlutterGemma.getActiveModel();
-    final chat = await _model!.createChat();
-    for (final m in messages) {
-      await chat.addQueryChunk(Message.text(text: m.text, isUser: m.isUser));
-    }
+    final model = await _activeModel();
+    final chat = await model.createChat();
+    await Future.forEach<AiMessage>(
+      messages,
+      (message) => chat.addQueryChunk(
+        Message.text(text: message.text, isUser: message.isUser),
+      ),
+    );
     await for (final token in chat.generateChatResponseAsync()) {
       if (token is TextResponse) yield token.token;
     }

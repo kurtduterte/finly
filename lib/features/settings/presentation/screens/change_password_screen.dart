@@ -1,5 +1,5 @@
 import 'package:finly/features/auth/presentation/providers/auth_providers.dart';
-import 'package:finly/features/settings/presentation/widgets/password_field.dart';
+import 'package:finly/features/settings/presentation/widgets/change_password_form_inputs.dart';
 import 'package:finly/features/settings/presentation/widgets/security_banner.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,8 +12,7 @@ class ChangePasswordScreen extends ConsumerStatefulWidget {
       _ChangePasswordScreenState();
 }
 
-class _ChangePasswordScreenState
-    extends ConsumerState<ChangePasswordScreen> {
+class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _currentCtrl = TextEditingController();
   final _newCtrl = TextEditingController();
@@ -36,7 +35,9 @@ class _ChangePasswordScreenState
     setState(() => _saving = true);
 
     try {
-      await ref.read(authNotifierProvider.notifier).updatePassword(
+      await ref
+          .read(authNotifierProvider.notifier)
+          .updatePassword(
             currentPassword: _currentCtrl.text,
             newPassword: _newCtrl.text,
           );
@@ -50,8 +51,9 @@ class _ChangePasswordScreenState
     } on Exception catch (e) {
       if (mounted) {
         final msg = e.toString().replaceFirst('Exception: ', '');
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(msg)));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(msg)));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -69,37 +71,18 @@ class _ChangePasswordScreenState
           children: [
             const SecurityBanner(),
             const SizedBox(height: 24),
-            PasswordField(
-              controller: _currentCtrl,
-              label: 'Current password',
-              obscure: _currentObscure,
-              onToggle: () =>
+            ChangePasswordFormInputs(
+              currentController: _currentCtrl,
+              newController: _newCtrl,
+              confirmController: _confirmCtrl,
+              currentObscure: _currentObscure,
+              newObscure: _newObscure,
+              confirmObscure: _confirmObscure,
+              onToggleCurrent: () =>
                   setState(() => _currentObscure = !_currentObscure),
-              validator: (v) => (v == null || v.isEmpty)
-                  ? 'Enter your current password'
-                  : null,
-            ),
-            const SizedBox(height: 12),
-            PasswordField(
-              controller: _newCtrl,
-              label: 'New password',
-              obscure: _newObscure,
-              onToggle: () => setState(() => _newObscure = !_newObscure),
-              validator: (v) {
-                if (v == null || v.isEmpty) return 'Enter a new password';
-                if (v.length < 8) return 'Minimum 8 characters';
-                return null;
-              },
-            ),
-            const SizedBox(height: 12),
-            PasswordField(
-              controller: _confirmCtrl,
-              label: 'Confirm new password',
-              obscure: _confirmObscure,
-              onToggle: () =>
+              onToggleNew: () => setState(() => _newObscure = !_newObscure),
+              onToggleConfirm: () =>
                   setState(() => _confirmObscure = !_confirmObscure),
-              validator: (v) =>
-                  v != _newCtrl.text ? 'Passwords do not match' : null,
             ),
             const SizedBox(height: 24),
             FilledButton(

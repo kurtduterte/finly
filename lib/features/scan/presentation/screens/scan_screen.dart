@@ -16,31 +16,27 @@ class ScanScreen extends ConsumerWidget {
     ref.listen(scanStateProvider, (_, next) {
       if (next.status == ScanStatus.done) {
         unawaited(
-          Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (_) => ExpenseFormScreen(
-                prefill: next.parsedExpense != null
-                    ? ScanPrefill(
-                        amountCentavos: next.parsedExpense!.amountCentavos,
-                        description: next.parsedExpense!.description,
-                        categoryName: next.parsedExpense!.categoryName,
-                        accountName: next.parsedExpense!.accountName,
-                        date: next.parsedExpense!.date,
-                        receiptId: next.receiptId,
-                      )
-                    : null,
-              ),
-            ),
-          ).then((_) {
-            ref.read(scanStateProvider.notifier).reset();
-          }),
+          Navigator.of(context)
+              .push(
+                MaterialPageRoute<void>(
+                  builder: (_) => ExpenseFormScreen(
+                    prefill: ScanPrefill.fromParsed(
+                      next.parsedExpense,
+                      receiptId: next.receiptId,
+                    ),
+                  ),
+                ),
+              )
+              .then((_) {
+                ref.read(scanStateProvider.notifier).reset();
+              }),
         );
       }
     });
 
     final state = ref.watch(scanStateProvider);
-    final isProcessing = state.status != ScanStatus.idle &&
-        state.status != ScanStatus.done;
+    final isProcessing =
+        state.status != ScanStatus.idle && state.status != ScanStatus.done;
 
     return SafeArea(
       child: Padding(
@@ -68,8 +64,7 @@ class ScanScreen extends ConsumerWidget {
                 child: Center(
                   child: ScanProcessingView(
                     state: state,
-                    onRetry: () =>
-                        ref.read(scanStateProvider.notifier).reset(),
+                    onRetry: () => ref.read(scanStateProvider.notifier).reset(),
                   ),
                 ),
               )

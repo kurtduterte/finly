@@ -20,24 +20,46 @@ class SyncUploadRepository {
     await _uploadExpenses();
   }
 
+  Future<String> _ensureCategoryRemoteId(Category category) async {
+    if (category.remoteId != null) return category.remoteId!;
+    final remoteId = _uuid.v4();
+    await db.categoriesDao.updateCategory(
+      category.copyWith(remoteId: Value(remoteId)),
+    );
+    return remoteId;
+  }
+
+  Future<String> _ensureAccountRemoteId(Account account) async {
+    if (account.remoteId != null) return account.remoteId!;
+    final remoteId = _uuid.v4();
+    await db.accountsDao.updateAccount(
+      account.copyWith(remoteId: Value(remoteId)),
+    );
+    return remoteId;
+  }
+
+  Future<String> _ensureExpenseRemoteId(Expense expense) async {
+    if (expense.remoteId != null) return expense.remoteId!;
+    final remoteId = _uuid.v4();
+    await db.expensesDao.updateExpense(
+      expense.copyWith(remoteId: Value(remoteId)),
+    );
+    return remoteId;
+  }
+
   Future<void> _uploadCategories() async {
-    final cats = await db.categoriesDao.getAll();
-    for (final cat in cats) {
-      final remoteId = cat.remoteId ?? _uuid.v4();
-      if (cat.remoteId == null) {
-        await db.categoriesDao.updateCategory(
-          cat.copyWith(remoteId: Value(remoteId)),
-        );
-      }
+    final categories = await db.categoriesDao.getAll();
+    for (final category in categories) {
+      final remoteId = await _ensureCategoryRemoteId(category);
       await remote.upsertCategory(
         FirestoreCategory(
           remoteId: remoteId,
-          name: cat.name,
-          iconCodepoint: cat.iconCodepoint,
-          color: cat.color,
-          isDefault: cat.isDefault,
-          createdAt: cat.createdAt,
-          updatedAt: cat.updatedAt,
+          name: category.name,
+          iconCodepoint: category.iconCodepoint,
+          color: category.color,
+          isDefault: category.isDefault,
+          createdAt: category.createdAt,
+          updatedAt: category.updatedAt,
         ),
       );
     }
@@ -45,22 +67,17 @@ class SyncUploadRepository {
 
   Future<void> _uploadAccounts() async {
     final accounts = await db.accountsDao.getAll();
-    for (final acc in accounts) {
-      final remoteId = acc.remoteId ?? _uuid.v4();
-      if (acc.remoteId == null) {
-        await db.accountsDao.updateAccount(
-          acc.copyWith(remoteId: Value(remoteId)),
-        );
-      }
+    for (final account in accounts) {
+      final remoteId = await _ensureAccountRemoteId(account);
       await remote.upsertAccount(
         FirestoreAccount(
           remoteId: remoteId,
-          name: acc.name,
-          type: acc.type,
-          balanceCentavos: acc.balanceCentavos,
-          color: acc.color,
-          createdAt: acc.createdAt,
-          updatedAt: acc.updatedAt,
+          name: account.name,
+          type: account.type,
+          balanceCentavos: account.balanceCentavos,
+          color: account.color,
+          createdAt: account.createdAt,
+          updatedAt: account.updatedAt,
         ),
       );
     }
@@ -74,26 +91,21 @@ class SyncUploadRepository {
     final catRemoteById = {for (final c in cats) c.id: c.remoteId};
     final accRemoteById = {for (final a in accounts) a.id: a.remoteId};
 
-    for (final exp in expenses) {
-      final catRemoteId = catRemoteById[exp.categoryId];
-      final accRemoteId = accRemoteById[exp.accountId];
+    for (final expense in expenses) {
+      final catRemoteId = catRemoteById[expense.categoryId];
+      final accRemoteId = accRemoteById[expense.accountId];
       if (catRemoteId == null || accRemoteId == null) continue;
 
-      final remoteId = exp.remoteId ?? _uuid.v4();
-      if (exp.remoteId == null) {
-        await db.expensesDao.updateExpense(
-          exp.copyWith(remoteId: Value(remoteId)),
-        );
-      }
+      final remoteId = await _ensureExpenseRemoteId(expense);
       await remote.upsertExpense(
         FirestoreExpense(
           remoteId: remoteId,
-          amountCentavos: exp.amountCentavos,
-          description: exp.description,
-          date: exp.date,
+          amountCentavos: expense.amountCentavos,
+          description: expense.description,
+          date: expense.date,
           categoryRemoteId: catRemoteId,
           accountRemoteId: accRemoteId,
-          updatedAt: exp.updatedAt,
+          updatedAt: expense.updatedAt,
         ),
       );
     }

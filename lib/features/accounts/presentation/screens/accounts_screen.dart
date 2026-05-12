@@ -13,6 +13,18 @@ class AccountsScreen extends ConsumerWidget {
   const AccountsScreen({super.key});
 
   static const _order = ['cash', 'ewallet', 'bank'];
+  static const _horizontalPadding = EdgeInsets.symmetric(horizontal: 20);
+
+  List<(String, List<Account>)> _buildSections(List<Account> accounts) {
+    final grouped = <String, List<Account>>{};
+    for (final account in accounts) {
+      (grouped[account.type] ??= []).add(account);
+    }
+    return _order
+        .where(grouped.containsKey)
+        .map((type) => (type, grouped[type]!))
+        .toList();
+  }
 
   void _showEditDialog(BuildContext context, Account account) {
     unawaited(
@@ -34,15 +46,7 @@ class AccountsScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('$e')),
         data: (accounts) {
-          final grouped = <String, List<Account>>{};
-          for (final a in accounts) {
-            (grouped[a.type] ??= []).add(a);
-          }
-          final sections = _order
-              .where(grouped.containsKey)
-              .map((t) => (t, grouped[t]!))
-              .toList();
-
+          final sections = _buildSections(accounts);
           return CustomScrollView(
             slivers: [
               SliverToBoxAdapter(
@@ -51,7 +55,7 @@ class AccountsScreen extends ConsumerWidget {
               for (final (type, list) in sections) ...[
                 SliverToBoxAdapter(child: _SectionLabel(type: type)),
                 SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: _horizontalPadding,
                   sliver: SliverList.separated(
                     itemCount: list.length,
                     separatorBuilder: (_, _) => const SizedBox(height: 8),
@@ -121,11 +125,11 @@ class _SectionLabel extends StatelessWidget {
   final String type;
 
   String get _label => switch (type) {
-        'cash' => 'Cash',
-        'ewallet' => 'E-Wallets',
-        'bank' => 'Banks',
-        _ => type,
-      };
+    'cash' => 'Cash',
+    'ewallet' => 'E-Wallets',
+    'bank' => 'Banks',
+    _ => type,
+  };
 
   @override
   Widget build(BuildContext context) {

@@ -1,5 +1,6 @@
 import 'package:finly/features/auth/presentation/providers/auth_providers.dart';
 import 'package:finly/features/auth/presentation/widgets/auth_error_banner.dart';
+import 'package:finly/features/auth/presentation/widgets/auth_password_field.dart';
 import 'package:finly/features/auth/presentation/widgets/auth_text_field.dart';
 import 'package:finly/features/auth/presentation/widgets/gradient_button.dart';
 import 'package:flutter/material.dart';
@@ -25,7 +26,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   }
 
   Future<void> _signUp() async {
-    await ref.read(authNotifierProvider.notifier).signUpWithEmail(
+    await ref
+        .read(authNotifierProvider.notifier)
+        .signUpWithEmail(
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
@@ -33,7 +36,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
     final authState = ref.watch(authNotifierProvider);
     final isLoading = authState.isLoading;
 
@@ -52,7 +55,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
               Text(
                 'Join Finly',
                 style: TextStyle(
-                  color: cs.onSurface,
+                  color: colorScheme.onSurface,
                   fontSize: 26,
                   fontWeight: FontWeight.w700,
                 ),
@@ -60,7 +63,10 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
               const SizedBox(height: 6),
               Text(
                 'Start tracking your finances today',
-                style: TextStyle(color: cs.onSurfaceVariant, fontSize: 14),
+                style: TextStyle(
+                  color: colorScheme.onSurfaceVariant,
+                  fontSize: 14,
+                ),
               ),
               const SizedBox(height: 32),
               if (authState.hasError) ...[
@@ -75,29 +81,20 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 textInputAction: TextInputAction.next,
               ),
               const SizedBox(height: 14),
-              AuthTextField(
+              AuthPasswordField(
                 controller: _passwordController,
-                label: 'Password',
-                hint: '••••••••',
                 obscureText: _obscurePassword,
-                textInputAction: TextInputAction.done,
                 onSubmitted: (_) => isLoading ? null : _signUp(),
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _obscurePassword
-                        ? Icons.visibility_off_rounded
-                        : Icons.visibility_rounded,
-                    size: 20,
-                    color: cs.onSurfaceVariant,
-                  ),
-                  onPressed: () =>
-                      setState(() => _obscurePassword = !_obscurePassword),
-                ),
+                onToggleVisibility: () =>
+                    setState(() => _obscurePassword = !_obscurePassword),
               ),
               const SizedBox(height: 8),
               Text(
                 'Use at least 8 characters with a mix of letters and numbers.',
-                style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12),
+                style: TextStyle(
+                  color: colorScheme.onSurfaceVariant,
+                  fontSize: 12,
+                ),
               ),
               const SizedBox(height: 28),
               GradientButton(

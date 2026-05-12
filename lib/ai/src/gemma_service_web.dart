@@ -7,6 +7,8 @@ import 'package:http/http.dart' as http;
 
 const _kGemmaWebApiUrl = String.fromEnvironment('GEMMA_WEB_API_URL');
 const _kGemmaWebApiKey = String.fromEnvironment('GEMMA_WEB_API_KEY');
+const _kMissingApiUrlMessage =
+    'Missing GEMMA_WEB_API_URL. Set it in .env.json for web builds.';
 
 class GemmaService {
   final http.Client _client = http.Client();
@@ -18,11 +20,7 @@ class GemmaService {
   Future<void> prepareModel({
     void Function(double progress)? onProgress,
   }) async {
-    if (_kGemmaWebApiUrl.isEmpty) {
-      throw Exception(
-        'Missing GEMMA_WEB_API_URL. Set it in .env.json for web builds.',
-      );
-    }
+    _apiUrlOrThrow();
     onProgress?.call(1);
   }
 
@@ -45,27 +43,9 @@ class GemmaService {
   Future<String?> _requestCompletion({
     required List<AiMessage> messages,
   }) async {
-    if (_kGemmaWebApiUrl.isEmpty) {
-      throw Exception(
-        'Missing GEMMA_WEB_API_URL. Set it in .env.json for web builds.',
-      );
-    }
-    final uri = Uri.parse(_kGemmaWebApiUrl);
-    final payload = {
-      'messages': [
-        for (final message in messages)
-          {
-            'role': message.isUser ? 'user' : 'assistant',
-            'content': message.text,
-          },
-      ],
-      'stream': false,
-    };
-    final headers = {
-      'Content-Type': 'application/json',
-      if (_kGemmaWebApiKey.isNotEmpty)
-        'Authorization': 'Bearer $_kGemmaWebApiKey',
-    };
+    final uri = _apiUrlOrThrow();
+    final payload = _buildPayload(messages);
+    final headers = _buildHeaders();
     final response = await _client
         .post(uri, headers: headers, body: jsonEncode(payload))
         .timeout(const Duration(seconds: 45));
@@ -77,42 +57,75 @@ class GemmaService {
     return _extractText(response.body);
   }
 
+  Uri _apiUrlOrThrow() {
+    if (_kGemmaWebApiUrl.isEmpty) {
+      throw Exception(_kMissingApiUrlMessage);
+    }
+    return Uri.parse(_kGemmaWebApiUrl);
+  }
+
+  Map<String, Object> _buildPayload(List<AiMessage> messages) {
+    return {
+      'messages': [
+        for (final message in messages)
+          {
+            'role': message.isUser ? 'user' : 'assistant',
+            'content': message.text,
+          },
+      ],
+      'stream': false,
+    };
+  }
+
+  Map<String, String> _buildHeaders() {
+    return {
+      'Content-Type': 'application/json',
+      if (_kGemmaWebApiKey.isNotEmpty)
+        'Authorization': 'Bearer $_kGemmaWebApiKey',
+    };
+  }
+
+  String? _nonEmptyString(dynamic value) {
+    if (value is! String) return null;
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return null;
+    return trimmed;
+  }
+
+  String? _extractMessageText(dynamic message) {
+    final directMessage = _nonEmptyString(message);
+    if (directMessage != null) return directMessage;
+    if (message is! Map<String, dynamic>) return null;
+    return _nonEmptyString(message['content']);
+  }
+
+  String? _extractChoiceText(dynamic choices) {
+    if (choices is! List || choices.isEmpty) return null;
+    final first = choices.first;
+    if (first is! Map<String, dynamic>) return null;
+    final text = _nonEmptyString(first['text']);
+    if (text != null) return text;
+    return _extractMessageText(first['message']);
+  }
+
   String? _extractText(String responseBody) {
     try {
       final decoded = jsonDecode(responseBody);
       if (decoded is! Map<String, dynamic>) {
         throw const FormatException('Response must be a JSON object.');
       }
-      final direct = decoded['text'] as String?;
-      if (direct != null && direct.trim().isNotEmpty) return direct.trim();
+      final directText = _nonEmptyString(decoded['text']);
+      if (directText != null) return directText;
 
-      final output = decoded['output'] as String?;
-      if (output != null && output.trim().isNotEmpty) return output.trim();
+      final outputText = _nonEmptyString(decoded['output']);
+      if (outputText != null) return outputText;
 
-      final message = decoded['message'];
-      if (message is String && message.trim().isNotEmpty) {
-        return message.trim();
-      }
-      if (message is Map<String, dynamic>) {
-        final content = message['content'] as String?;
-        if (content != null && content.trim().isNotEmpty) return content.trim();
-      }
+      final messageText = _extractMessageText(decoded['message']);
+      if (messageText != null) return messageText;
 
-      final choices = decoded['choices'];
-      if (choices is List && choices.isNotEmpty) {
-        final first = choices.first;
-        if (first is Map<String, dynamic>) {
-          final text = first['text'] as String?;
-          if (text != null && text.trim().isNotEmpty) return text.trim();
-          final choiceMessage = first['message'];
-          if (choiceMessage is Map<String, dynamic>) {
-            final content = choiceMessage['content'] as String?;
-            if (content != null && content.trim().isNotEmpty) {
-              return content.trim();
-            }
-          }
-        }
-      }
+      final choiceText = _extractChoiceText(decoded['choices']);
+      if (choiceText != null) return choiceText;
+
       throw Exception(
         'Gemma API response missing text/output/message/choices content.',
       );

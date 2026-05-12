@@ -14,55 +14,55 @@ class FirestoreDataSource {
   CollectionReference<Map<String, dynamic>> _col(String name) =>
       _db.collection('users').doc(userId).collection(name);
 
-  Future<void> upsertExpense(FirestoreExpense expense) =>
-      _col('expenses').doc(expense.remoteId).set(expense.toMap());
+  Future<void> _upsert(
+    String collection,
+    String remoteId,
+    Map<String, dynamic> data,
+  ) => _col(collection).doc(remoteId).set(data);
 
-  Future<void> deleteExpense(String remoteId) =>
-      _col('expenses').doc(remoteId).delete();
+  Future<void> _delete(String collection, String remoteId) =>
+      _col(collection).doc(remoteId).delete();
+
+  Stream<List<T>> _watchCollection<T>(
+    String collection,
+    T Function(String id, Map<String, dynamic> data) fromMap,
+  ) {
+    return _col(collection).snapshots().map(
+      (snapshot) =>
+          snapshot.docs.map((doc) => fromMap(doc.id, doc.data())).toList(),
+    );
+  }
+
+  Future<void> upsertExpense(FirestoreExpense expense) =>
+      _upsert('expenses', expense.remoteId, expense.toMap());
+
+  Future<void> deleteExpense(String remoteId) => _delete('expenses', remoteId);
 
   Stream<List<FirestoreExpense>> watchExpenses() =>
-      _col('expenses').snapshots().map(
-        (s) => s.docs
-            .map((d) => FirestoreExpense.fromMap(d.id, d.data()))
-            .toList(),
-      );
+      _watchCollection('expenses', FirestoreExpense.fromMap);
 
   Future<void> upsertAccount(FirestoreAccount account) =>
-      _col('accounts').doc(account.remoteId).set(account.toMap());
+      _upsert('accounts', account.remoteId, account.toMap());
 
-  Future<void> deleteAccount(String remoteId) =>
-      _col('accounts').doc(remoteId).delete();
+  Future<void> deleteAccount(String remoteId) => _delete('accounts', remoteId);
 
   Stream<List<FirestoreAccount>> watchAccounts() =>
-      _col('accounts').snapshots().map(
-        (s) => s.docs
-            .map((d) => FirestoreAccount.fromMap(d.id, d.data()))
-            .toList(),
-      );
+      _watchCollection('accounts', FirestoreAccount.fromMap);
 
   Future<void> upsertCategory(FirestoreCategory category) =>
-      _col('categories').doc(category.remoteId).set(category.toMap());
+      _upsert('categories', category.remoteId, category.toMap());
 
   Future<void> deleteCategory(String remoteId) =>
-      _col('categories').doc(remoteId).delete();
+      _delete('categories', remoteId);
 
   Stream<List<FirestoreCategory>> watchCategories() =>
-      _col('categories').snapshots().map(
-        (s) => s.docs
-            .map((d) => FirestoreCategory.fromMap(d.id, d.data()))
-            .toList(),
-      );
+      _watchCollection('categories', FirestoreCategory.fromMap);
 
   Future<void> upsertReceipt(FirestoreReceipt receipt) =>
-      _col('receipts').doc(receipt.remoteId).set(receipt.toMap());
+      _upsert('receipts', receipt.remoteId, receipt.toMap());
 
-  Future<void> deleteReceipt(String remoteId) =>
-      _col('receipts').doc(remoteId).delete();
+  Future<void> deleteReceipt(String remoteId) => _delete('receipts', remoteId);
 
   Stream<List<FirestoreReceipt>> watchReceipts() =>
-      _col('receipts').snapshots().map(
-        (s) => s.docs
-            .map((d) => FirestoreReceipt.fromMap(d.id, d.data()))
-            .toList(),
-      );
+      _watchCollection('receipts', FirestoreReceipt.fromMap);
 }

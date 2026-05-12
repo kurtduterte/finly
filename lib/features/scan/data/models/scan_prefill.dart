@@ -1,3 +1,5 @@
+import 'package:finly/features/ai_chat/data/models/parsed_expense.dart';
+
 class ScanPrefill {
   const ScanPrefill({
     this.amountCentavos,
@@ -14,4 +16,16 @@ class ScanPrefill {
   final String? accountName;
   final DateTime? date;
   final int? receiptId;
+
+  static ScanPrefill? fromParsed(ParsedExpense? parsed, {int? receiptId}) {
+    if (parsed == null) return null;
+    return ScanPrefill(
+      amountCentavos: parsed.amountCentavos,
+      description: parsed.description,
+      categoryName: parsed.categoryName,
+      accountName: parsed.accountName,
+      date: parsed.date,
+      receiptId: receiptId,
+    );
+  }
 }

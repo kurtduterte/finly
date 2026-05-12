@@ -73,20 +73,11 @@ class _QrScanScreenState extends ConsumerState<QrScanScreen> {
   Widget build(BuildContext context) {
     ref.listen(qrScanProvider, (_, next) {
       if (next.status == QrScanStatus.done) {
-        final p = next.parsedExpense;
         unawaited(
           Navigator.of(context).pushReplacement(
             MaterialPageRoute<void>(
               builder: (_) => ExpenseFormScreen(
-                prefill: p != null
-                    ? ScanPrefill(
-                        amountCentavos: p.amountCentavos,
-                        description: p.description,
-                        categoryName: p.categoryName,
-                        accountName: p.accountName,
-                        date: p.date,
-                      )
-                    : null,
+                prefill: ScanPrefill.fromParsed(next.parsedExpense),
               ),
             ),
           ),
@@ -118,8 +109,8 @@ class _QrScanScreenState extends ConsumerState<QrScanScreen> {
                       Text(
                         'Analyzing...',
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              color: Colors.white,
-                            ),
+                          color: Colors.white,
+                        ),
                       ),
                     ],
                   ),

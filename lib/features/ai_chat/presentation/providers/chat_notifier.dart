@@ -12,8 +12,9 @@ import 'package:finly/features/expenses/presentation/providers/expenses_provider
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 export 'package:finly/features/ai_chat/presentation/providers/chat_state.dart';
+part 'chat_notifier_message_flow.dart';
 
-class ChatNotifier extends Notifier<ChatState> {
+class ChatNotifier extends Notifier<ChatState> with _ChatNotifierMessageFlow {
   @override
   ChatState build() => const ChatState();
 
@@ -31,54 +32,12 @@ class ChatNotifier extends Notifier<ChatState> {
   Future<void> sendMessage(String text) async {
     if (state.isGenerating) return;
 
-    final repo = ref.read(chatRepositoryProvider);
-    var convId = state.conversationId;
-
-    final history = convId != null
-        ? await repo.getMessages(convId)
-        : <ChatMessage>[];
-
-    if (convId == null) {
-      convId = await repo.createConversation();
-      final title = text.length > 40 ? '${text.substring(0, 40)}…' : text;
-      unawaited(repo.updateTitle(convId, title));
-      state = state.copyWith(conversationId: convId);
-    }
-
-    await repo.addMessage(conversationId: convId, text: text, isUser: true);
-    state = state.copyWith(isGenerating: true, streamingBuffer: '');
-
-    try {
-      if (isAddExpenseIntent(text)) {
-        await _handleAddExpense(
-          text,
-          convId,
-          repo,
-          contextMessage: _latestUserMessage(history),
-        );
-      } else {
-        final aiText = await _streamConversation(text, history, convId);
-        if (state.conversationId != convId) return;
-        await repo.addMessage(
-          conversationId: convId,
-          text: aiText,
-          isUser: false,
-        );
-      }
-    } on Exception catch (e) {
-      if (state.conversationId != convId) return;
-      await repo.addMessage(
-        conversationId: convId,
-        text: 'Sorry, something went wrong: $e',
-        isUser: false,
-      );
-    } finally {
-      if (state.conversationId == convId) {
-        state = state.copyWith(isGenerating: false, streamingBuffer: '');
-      }
-    }
+    final context = await _prepareMessageContext(text);
+    await _sendUserMessage(context, text);
+    await _receiveMessage(context, text);
   }
 
+  @override
   Future<String> _streamConversation(
     String userMessage,
     List<ChatMessage> history,
@@ -99,10 +58,10 @@ class ChatNotifier extends Notifier<ChatState> {
     return buffer.toString();
   }
 
-  Future<void> _handleAddExpense(
+  @override
+  Future<String> _handleAddExpense(
     String userMessage,
-    int convId,
-    ChatRepository repo, {
+    int convId, {
     String? contextMessage,
   }) async {
     final handler = ChatExpenseHandler(
@@ -120,14 +79,10 @@ class ChatNotifier extends Notifier<ChatState> {
       },
       isCancelled: () => state.conversationId != convId,
     );
-    if (aiMessage.isEmpty || state.conversationId != convId) return;
-    await repo.addMessage(
-      conversationId: convId,
-      text: aiMessage,
-      isUser: false,
-    );
+    return aiMessage;
   }
 
+  @override
   String? _latestUserMessage(List<ChatMessage> history) {
     for (final msg in history.reversed) {
       if (msg.isUser == 1) return msg.messageText;

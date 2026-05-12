@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:finly/core/db/app_database.dart';
 import 'package:finly/features/sync/data/datasources/firestore_datasource.dart';
+import 'package:finly/features/sync/data/repositories/sync_merge_helper.dart';
 
 class SyncDownloadRepository {
   const SyncDownloadRepository({required this.db, required this.remote});
@@ -15,7 +16,7 @@ class SyncDownloadRepository {
   }
 
   Future<Map<String, int>> _downloadCategories() {
-    return _merge(
+    return SyncMergeHelper.merge(
       remoteItems: remote.watchCategories().first,
       localItems: db.categoriesDao.getAll(),
       localRemoteId: (l) => l.remoteId,
@@ -46,7 +47,7 @@ class SyncDownloadRepository {
   }
 
   Future<Map<String, int>> _downloadAccounts() {
-    return _merge(
+    return SyncMergeHelper.merge(
       remoteItems: remote.watchAccounts().first,
       localItems: db.accountsDao.getAll(),
       localRemoteId: (l) => l.remoteId,
@@ -121,40 +122,5 @@ class SyncDownloadRepository {
         );
       }
     }
-  }
-
-  Future<Map<String, int>> _merge<R, L>({
-    required Future<List<R>> remoteItems,
-    required Future<List<L>> localItems,
-    required String? Function(L) localRemoteId,
-    required int Function(L) localId,
-    required String Function(R) remoteId,
-    required DateTime Function(R) remoteUpdatedAt,
-    required DateTime Function(L) localUpdatedAt,
-    required Future<void> Function(L, R) onUpdate,
-    required Future<int> Function(R) onInsert,
-  }) async {
-    final remote = await remoteItems;
-    final local = await localItems;
-    final idMap = {
-      for (final l in local)
-        if (localRemoteId(l) != null) localRemoteId(l)!: localId(l),
-    };
-    final byRemoteId = {
-      for (final l in local)
-        if (localRemoteId(l) != null) localRemoteId(l)!: l,
-    };
-    for (final rem in remote) {
-      final loc = byRemoteId[remoteId(rem)];
-      if (loc != null) {
-        idMap[remoteId(rem)] = localId(loc);
-        if (remoteUpdatedAt(rem).isAfter(localUpdatedAt(loc))) {
-          await onUpdate(loc, rem);
-        }
-      } else {
-        idMap[remoteId(rem)] = await onInsert(rem);
-      }
-    }
-    return idMap;
   }
 }

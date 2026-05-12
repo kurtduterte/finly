@@ -1,8 +1,8 @@
 import 'package:drift/drift.dart' show Value;
 import 'package:finly/core/db/app_database.dart';
 import 'package:finly/core/db/daos/expenses_dao.dart';
-import 'package:finly/core/utils/date_format.dart';
 import 'package:finly/features/expenses/presentation/providers/expenses_providers.dart';
+import 'package:finly/features/expenses/presentation/widgets/expense_form_fields.dart';
 import 'package:finly/features/scan/data/models/scan_prefill.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -60,42 +60,51 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
     _descCtrl = TextEditingController(text: desc);
   }
 
-  void _applyPrefillSelections(
-    List<Category> categories,
-    List<Account> accounts,
-  ) {
-    if (_category != null && _account != null) return;
-    final p = widget.prefill;
-    if (p == null) return;
-    if (_category == null && p.categoryName != null) {
-      final lower = p.categoryName!.toLowerCase();
-      final match = categories.firstWhere(
-        (c) => c.name.toLowerCase() == lower,
-        orElse: () => categories.firstWhere(
-          (c) =>
-              c.name.toLowerCase().contains(lower) ||
-              lower.contains(c.name.toLowerCase()),
-          orElse: () => categories.first,
-        ),
-      );
-      _category = match;
-    }
-    if (_account == null && p.accountName != null) {
-      final lower = p.accountName!.toLowerCase();
-      final match = accounts.firstWhere(
-        (a) => a.name.toLowerCase() == lower,
-        orElse: () => accounts.first,
-      );
-      _account = match;
-    }
-  }
-
   @override
   void dispose() {
     _amountCtrl.dispose();
     _otherTypeCtrl.dispose();
     _descCtrl.dispose();
     super.dispose();
+  }
+
+  void _applyPrefillSelections(
+    List<Category> categories,
+    List<Account> accounts,
+  ) {
+    if (_category != null && _account != null) return;
+    final prefill = widget.prefill;
+    if (prefill == null) return;
+    if (_category == null && prefill.categoryName != null) {
+      _category = _findPrefillCategory(categories, prefill.categoryName!);
+    }
+    if (_account == null && prefill.accountName != null) {
+      _account = _findPrefillAccount(accounts, prefill.accountName!);
+    }
+  }
+
+  Category _findPrefillCategory(
+    List<Category> categories,
+    String categoryName,
+  ) {
+    final lower = categoryName.toLowerCase();
+    return categories.firstWhere(
+      (category) => category.name.toLowerCase() == lower,
+      orElse: () => categories.firstWhere(
+        (category) =>
+            category.name.toLowerCase().contains(lower) ||
+            lower.contains(category.name.toLowerCase()),
+        orElse: () => categories.first,
+      ),
+    );
+  }
+
+  Account _findPrefillAccount(List<Account> accounts, String accountName) {
+    final lower = accountName.toLowerCase();
+    return accounts.firstWhere(
+      (account) => account.name.toLowerCase() == lower,
+      orElse: () => accounts.first,
+    );
   }
 
   Future<void> _pickDate() async {
@@ -116,15 +125,17 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
       );
       return;
     }
-    final centavos = (double.parse(_amountCtrl.text) * 100).round();
+
+    final amountCentavos = (double.parse(_amountCtrl.text) * 100).round();
     final type = _otherTypeCtrl.text.trim();
-    final desc = _descCtrl.text.trim();
-    final description = _isOther ? '[$type] $desc' : desc;
+    final descriptionText = _descCtrl.text.trim();
+    final description = _isOther ? '[$type] $descriptionText' : descriptionText;
     final notifier = ref.read(expensesNotifierProvider.notifier);
+
     if (widget.initial == null) {
       await notifier.add(
         ExpensesCompanion.insert(
-          amountCentavos: centavos,
+          amountCentavos: amountCentavos,
           description: description,
           date: _date,
           categoryId: _category!.id,
@@ -135,7 +146,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
     } else {
       await notifier.updateExpense(
         widget.initial!.expense.copyWith(
-          amountCentavos: centavos,
+          amountCentavos: amountCentavos,
           description: description,
           date: _date,
           categoryId: _category!.id,
@@ -143,12 +154,13 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
         ),
       );
     }
+
     if (mounted) Navigator.of(context).pop();
   }
 
-  void _onCategoryChanged(Category? v) => setState(() {
-    if (v?.name != 'Other') _otherTypeCtrl.clear();
-    _category = v;
+  void _onCategoryChanged(Category? category) => setState(() {
+    if (category?.name != 'Other') _otherTypeCtrl.clear();
+    _category = category;
   });
 
   @override
@@ -170,82 +182,19 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            TextFormField(
-              controller: _amountCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Amount',
-                prefixText: '₱ ',
-              ),
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              validator: (v) {
-                if (v == null || v.isEmpty) return 'Required';
-                final n = double.tryParse(v);
-                if (n == null) return 'Invalid amount';
-                if (n <= 0) return 'Must be greater than 0';
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _descCtrl,
-              decoration: const InputDecoration(labelText: 'Description'),
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Required' : null,
-            ),
-            const SizedBox(height: 8),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Date'),
-              subtitle: Text(formatDate(_date)),
-              trailing: const Icon(Icons.calendar_today),
-              onTap: _pickDate,
-            ),
-            categories.when(
-              data: (list) => DropdownButtonFormField<Category>(
-                initialValue: _category,
-                decoration: const InputDecoration(labelText: 'Category'),
-                items: list
-                    .map((c) => DropdownMenuItem(value: c, child: Text(c.name)))
-                    .toList(),
-                onChanged: _onCategoryChanged,
-                validator: (v) => v == null ? 'Required' : null,
-              ),
-              loading: () => const SizedBox(
-                height: 56,
-                child: Center(child: CircularProgressIndicator()),
-              ),
-              error: (_, _) => const Text('Failed to load categories'),
-            ),
-            if (_isOther) ...[
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _otherTypeCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Expense type',
-                  hintText: 'e.g. Pet care, Gift, Miscellaneous',
-                ),
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Required' : null,
-              ),
-            ],
-            const SizedBox(height: 16),
-            accounts.when(
-              data: (list) => DropdownButtonFormField<Account>(
-                initialValue: _account,
-                decoration: const InputDecoration(labelText: 'Account'),
-                items: list
-                    .map((a) => DropdownMenuItem(value: a, child: Text(a.name)))
-                    .toList(),
-                onChanged: (v) => setState(() => _account = v),
-                validator: (v) => v == null ? 'Required' : null,
-              ),
-              loading: () => const SizedBox(
-                height: 56,
-                child: Center(child: CircularProgressIndicator()),
-              ),
-              error: (_, _) => const Text('Failed to load accounts'),
+            ExpenseFormFields(
+              amountController: _amountCtrl,
+              descriptionController: _descCtrl,
+              otherTypeController: _otherTypeCtrl,
+              date: _date,
+              categories: categories,
+              accounts: accounts,
+              selectedCategory: _category,
+              selectedAccount: _account,
+              showOtherTypeField: _isOther,
+              onPickDate: _pickDate,
+              onCategoryChanged: _onCategoryChanged,
+              onAccountChanged: (v) => setState(() => _account = v),
             ),
           ],
         ),

@@ -48,6 +48,31 @@ class AppDatabase extends _$AppDatabase {
   @override
   int get schemaVersion => 6;
 
+  Future<void> _safeStatement(String sql) async {
+    try {
+      await customStatement(sql);
+    } on Exception {
+      return;
+    }
+  }
+
+  Future<void> _applyRemoteColumnsMigration() async {
+    const statements = [
+      'ALTER TABLE expenses ADD COLUMN remote_id TEXT',
+      'ALTER TABLE expenses ADD COLUMN updated_at INTEGER NOT NULL DEFAULT 0',
+      'ALTER TABLE accounts ADD COLUMN remote_id TEXT',
+      'ALTER TABLE accounts ADD COLUMN updated_at INTEGER NOT NULL DEFAULT 0',
+      'ALTER TABLE categories ADD COLUMN remote_id TEXT',
+      'ALTER TABLE categories ADD COLUMN updated_at INTEGER NOT NULL DEFAULT 0',
+      'ALTER TABLE categories ADD COLUMN created_at INTEGER NOT NULL DEFAULT 0',
+      'ALTER TABLE receipts ADD COLUMN remote_id TEXT',
+      'ALTER TABLE receipts ADD COLUMN updated_at INTEGER NOT NULL DEFAULT 0',
+    ];
+    for (final statement in statements) {
+      await _safeStatement(statement);
+    }
+  }
+
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) async {
@@ -59,43 +84,12 @@ class AppDatabase extends _$AppDatabase {
       });
     },
     onUpgrade: (m, from, to) async {
-      Future<void> safe(String sql) async {
-        try {
-          await customStatement(sql);
-        } on Exception {
-          return;
-        }
-      }
-
       if (from < 2) {
         await m.createTable(conversations);
         await m.createTable(chatMessages);
       }
       if (from < 6) {
-        await safe('ALTER TABLE expenses ADD COLUMN remote_id TEXT');
-        await safe(
-          'ALTER TABLE expenses'
-          ' ADD COLUMN updated_at INTEGER NOT NULL DEFAULT 0',
-        );
-        await safe('ALTER TABLE accounts ADD COLUMN remote_id TEXT');
-        await safe(
-          'ALTER TABLE accounts'
-          ' ADD COLUMN updated_at INTEGER NOT NULL DEFAULT 0',
-        );
-        await safe('ALTER TABLE categories ADD COLUMN remote_id TEXT');
-        await safe(
-          'ALTER TABLE categories'
-          ' ADD COLUMN updated_at INTEGER NOT NULL DEFAULT 0',
-        );
-        await safe(
-          'ALTER TABLE categories'
-          ' ADD COLUMN created_at INTEGER NOT NULL DEFAULT 0',
-        );
-        await safe('ALTER TABLE receipts ADD COLUMN remote_id TEXT');
-        await safe(
-          'ALTER TABLE receipts'
-          ' ADD COLUMN updated_at INTEGER NOT NULL DEFAULT 0',
-        );
+        await _applyRemoteColumnsMigration();
       }
     },
   );

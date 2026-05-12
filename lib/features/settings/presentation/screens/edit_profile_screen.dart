@@ -1,6 +1,6 @@
 import 'package:finly/features/auth/presentation/providers/auth_providers.dart';
 import 'package:finly/features/settings/presentation/providers/settings_providers.dart';
-import 'package:finly/features/settings/presentation/widgets/profile_field.dart';
+import 'package:finly/features/settings/presentation/widgets/edit_profile_form_inputs.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -45,88 +45,83 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     super.dispose();
   }
 
+  void _setSaving(bool value) {
+    if (!mounted) return;
+    setState(() => _saving = value);
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _saveDisplayName() {
+    return ref
+        .read(authNotifierProvider.notifier)
+        .updateDisplayName(_nameCtrl.text.trim());
+  }
+
+  Future<void> _saveProfileExtras() {
+    return ref
+        .read(profileExtrasProvider.notifier)
+        .save(
+          phone: _phoneCtrl.text.trim(),
+          address: _addressCtrl.text.trim(),
+        );
+  }
+
+  Widget _buildSaveAction() {
+    return TextButton(
+      onPressed: _saving ? null : _save,
+      child: _saving
+          ? const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : const Text('Save'),
+    );
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
-    setState(() => _saving = true);
+    _setSaving(true);
 
     try {
-      await ref
-          .read(authNotifierProvider.notifier)
-          .updateDisplayName(_nameCtrl.text.trim());
-
-      await ref.read(profileExtrasProvider.notifier).save(
-            phone: _phoneCtrl.text.trim(),
-            address: _addressCtrl.text.trim(),
-          );
+      await _saveDisplayName();
+      await _saveProfileExtras();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile updated')),
-        );
+        _showMessage('Profile updated');
         Navigator.of(context).pop();
       }
     } on Exception catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(e.toString())));
-      }
+      if (mounted) _showMessage(e.toString());
     } finally {
-      if (mounted) setState(() => _saving = false);
+      _setSaving(false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Edit Profile'),
-        actions: [
-          TextButton(
-            onPressed: _saving ? null : _save,
-            child: _saving
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text('Save'),
-          ),
-        ],
+        actions: [_buildSaveAction()],
       ),
       body: Form(
         key: _formKey,
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            ProfileField(
-              controller: _nameCtrl,
-              label: 'Display name',
-              icon: Icons.person_outline_rounded,
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Name is required' : null,
-            ),
-            const SizedBox(height: 12),
-            ProfileField(
-              controller: _emailCtrl,
-              label: 'Email',
-              icon: Icons.email_outlined,
-              readOnly: true,
-            ),
-            const SizedBox(height: 12),
-            ProfileField(
-              controller: _phoneCtrl,
-              label: 'Phone number',
-              icon: Icons.phone_outlined,
-              keyboardType: TextInputType.phone,
-            ),
-            const SizedBox(height: 12),
-            ProfileField(
-              controller: _addressCtrl,
-              label: 'Address',
-              icon: Icons.location_on_outlined,
-              maxLines: 3,
+            EditProfileFormInputs(
+              nameController: _nameCtrl,
+              emailController: _emailCtrl,
+              phoneController: _phoneCtrl,
+              addressController: _addressCtrl,
             ),
             const SizedBox(height: 24),
             FilledButton(
@@ -138,7 +133,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               'Display name is synced with your account.\n'
               'Phone and address are stored locally on this device.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12),
+              style: TextStyle(
+                color: colorScheme.onSurfaceVariant,
+                fontSize: 12,
+              ),
             ),
           ],
         ),
