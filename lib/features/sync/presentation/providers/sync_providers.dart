@@ -7,10 +7,6 @@ import 'package:finly/features/sync/data/repositories/sync_download_repository.d
 import 'package:finly/features/sync/data/repositories/sync_upload_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-// ---------------------------------------------------------------------------
-// State
-// ---------------------------------------------------------------------------
-
 class SyncState {
   const SyncState({
     this.isSyncing = false,
@@ -30,16 +26,9 @@ class SyncState {
       );
 }
 
-// ---------------------------------------------------------------------------
-// Notifier
-// ---------------------------------------------------------------------------
-
 class SyncNotifier extends Notifier<SyncState> {
   @override
   SyncState build() {
-    // Auto-sync when the user logs in.
-    // asData?.value returns the AuthUser (or null) only when the stream has
-    // emitted; it returns null while loading / on error.
     ref.listen(authStateProvider, (prev, next) {
       final wasGuest = prev?.asData?.value == null;
       final isNowSignedIn = next.asData?.value != null;
@@ -67,10 +56,6 @@ class SyncNotifier extends Notifier<SyncState> {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Providers
-// ---------------------------------------------------------------------------
-
 final _firestoreDataSourceProvider = Provider<FirestoreDataSource?>((ref) {
   final uid = ref.watch(authStateProvider).asData?.value?.uid;
   return uid != null ? FirestoreDataSource(userId: uid) : null;
@@ -94,6 +79,6 @@ final _syncDownloadProvider = Provider<SyncDownloadRepository?>((ref) {
   );
 });
 
-/// The public sync provider. Call [SyncNotifier.syncNow] to trigger a sync.
-final syncNotifierProvider =
-    NotifierProvider<SyncNotifier, SyncState>(SyncNotifier.new);
+final syncNotifierProvider = NotifierProvider<SyncNotifier, SyncState>(
+  SyncNotifier.new,
+);

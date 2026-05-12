@@ -28,10 +28,9 @@ class _OverlayPainter extends CustomPainter {
       Path.combine(
         PathOperation.difference,
         Path()..addRect(Offset.zero & size),
-        Path()
-          ..addRRect(
-            RRect.fromRectAndRadius(rect, const Radius.circular(8)),
-          ),
+        Path()..addRRect(
+          RRect.fromRectAndRadius(rect, const Radius.circular(8)),
+        ),
       ),
       Paint()..color = Colors.black54,
     );
@@ -46,16 +45,12 @@ class _OverlayPainter extends CustomPainter {
     final b = top + frameSize;
 
     void line(Offset a, Offset c) => canvas.drawLine(a, c, corner);
-    // Top-left
     line(Offset(left, top + cornerLen), Offset(left, top));
     line(Offset(left, top), Offset(left + cornerLen, top));
-    // Top-right
     line(Offset(r - cornerLen, top), Offset(r, top));
     line(Offset(r, top), Offset(r, top + cornerLen));
-    // Bottom-left
     line(Offset(left, b - cornerLen), Offset(left, b));
     line(Offset(left, b), Offset(left + cornerLen, b));
-    // Bottom-right
     line(Offset(r - cornerLen, b), Offset(r, b));
     line(Offset(r, b), Offset(r, b - cornerLen));
   }

@@ -9,7 +9,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 export 'package:finly/features/scan/data/models/scan_prefill.dart';
 
-// Parses "[type] desc" → (type, desc). Returns null if no match.
 (String, String)? _parseOther(String description) {
   final m = RegExp(r'^\[(.+?)\] (.*)$').firstMatch(description);
   return m != null ? (m.group(1)!, m.group(2)!) : null;
@@ -44,8 +43,8 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
       text: e != null
           ? (e.amountCentavos / 100).toStringAsFixed(2)
           : p?.amountCentavos != null
-              ? (p!.amountCentavos! / 100).toStringAsFixed(2)
-              : '',
+          ? (p!.amountCentavos! / 100).toStringAsFixed(2)
+          : '',
     );
     _date = e?.date ?? p?.date ?? DateTime.now();
     _category = widget.initial?.category;
@@ -61,7 +60,6 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
     _descCtrl = TextEditingController(text: desc);
   }
 
-  // Categories/accounts load async; set prefill values once available.
   void _applyPrefillSelections(
     List<Category> categories,
     List<Account> accounts,
@@ -74,7 +72,8 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
       final match = categories.firstWhere(
         (c) => c.name.toLowerCase() == lower,
         orElse: () => categories.firstWhere(
-          (c) => c.name.toLowerCase().contains(lower) ||
+          (c) =>
+              c.name.toLowerCase().contains(lower) ||
               lower.contains(c.name.toLowerCase()),
           orElse: () => categories.first,
         ),
@@ -148,16 +147,15 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
   }
 
   void _onCategoryChanged(Category? v) => setState(() {
-        if (v?.name != 'Other') _otherTypeCtrl.clear();
-        _category = v;
-      });
+    if (v?.name != 'Other') _otherTypeCtrl.clear();
+    _category = v;
+  });
 
   @override
   Widget build(BuildContext context) {
     final categories = ref.watch(categoriesListProvider);
     final accounts = ref.watch(accountsListProvider);
 
-    // Apply prefill category/account once data loads.
     if (categories.hasValue && accounts.hasValue) {
       _applyPrefillSelections(categories.value!, accounts.value!);
     }
@@ -178,8 +176,9 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
                 labelText: 'Amount',
                 prefixText: '₱ ',
               ),
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               validator: (v) {
                 if (v == null || v.isEmpty) return 'Required';
                 final n = double.tryParse(v);

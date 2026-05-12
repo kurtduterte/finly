@@ -14,19 +14,14 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
     await FlutterGemma.initialize();
-  } on Exception catch (_) {
-    // Non-fatal: Gemma may not be supported on this device.
-  }
+  } on Exception catch (_) {}
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
   } on FirebaseException catch (e) {
     if (e.code != 'duplicate-app') rethrow;
-  } on Exception catch (_) {
-    // Firebase failed for an unexpected reason — UI will surface the error
-    // via authStateProvider rather than crashing before runApp().
-  }
+  } on Exception catch (_) {}
   runApp(const ProviderScope(child: FinlyApp()));
 }
 

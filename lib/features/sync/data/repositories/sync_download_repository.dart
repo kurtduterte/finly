@@ -2,10 +2,6 @@ import 'package:drift/drift.dart';
 import 'package:finly/core/db/app_database.dart';
 import 'package:finly/features/sync/data/datasources/firestore_datasource.dart';
 
-/// Pulls Firestore records into the local SQLite database.
-///
-/// Conflict resolution: last-write-wins using `updatedAt`. Remote wins only
-/// when its timestamp is strictly newer than the local record.
 class SyncDownloadRepository {
   const SyncDownloadRepository({required this.db, required this.remote});
 
@@ -27,21 +23,25 @@ class SyncDownloadRepository {
       remoteId: (r) => r.remoteId,
       remoteUpdatedAt: (r) => r.updatedAt,
       localUpdatedAt: (l) => l.updatedAt,
-      onUpdate: (loc, rem) => db.categoriesDao.updateCategory(loc.copyWith(
-        name: rem.name,
-        iconCodepoint: rem.iconCodepoint,
-        color: rem.color,
-        updatedAt: rem.updatedAt,
-      )),
-      onInsert: (rem) => db.categoriesDao.insertCategory(CategoriesCompanion(
-        name: Value(rem.name),
-        iconCodepoint: Value(rem.iconCodepoint),
-        color: Value(rem.color),
-        isDefault: Value(rem.isDefault),
-        remoteId: Value(rem.remoteId),
-        createdAt: Value(rem.createdAt),
-        updatedAt: Value(rem.updatedAt),
-      )),
+      onUpdate: (loc, rem) => db.categoriesDao.updateCategory(
+        loc.copyWith(
+          name: rem.name,
+          iconCodepoint: rem.iconCodepoint,
+          color: rem.color,
+          updatedAt: rem.updatedAt,
+        ),
+      ),
+      onInsert: (rem) => db.categoriesDao.insertCategory(
+        CategoriesCompanion(
+          name: Value(rem.name),
+          iconCodepoint: Value(rem.iconCodepoint),
+          color: Value(rem.color),
+          isDefault: Value(rem.isDefault),
+          remoteId: Value(rem.remoteId),
+          createdAt: Value(rem.createdAt),
+          updatedAt: Value(rem.updatedAt),
+        ),
+      ),
     );
   }
 
@@ -54,22 +54,26 @@ class SyncDownloadRepository {
       remoteId: (r) => r.remoteId,
       remoteUpdatedAt: (r) => r.updatedAt,
       localUpdatedAt: (l) => l.updatedAt,
-      onUpdate: (loc, rem) => db.accountsDao.updateAccount(loc.copyWith(
-        name: rem.name,
-        type: rem.type,
-        balanceCentavos: rem.balanceCentavos,
-        color: rem.color,
-        updatedAt: rem.updatedAt,
-      )),
-      onInsert: (rem) => db.accountsDao.insertAccount(AccountsCompanion(
-        name: Value(rem.name),
-        type: Value(rem.type),
-        balanceCentavos: Value(rem.balanceCentavos),
-        color: Value(rem.color),
-        remoteId: Value(rem.remoteId),
-        createdAt: Value(rem.createdAt),
-        updatedAt: Value(rem.updatedAt),
-      )),
+      onUpdate: (loc, rem) => db.accountsDao.updateAccount(
+        loc.copyWith(
+          name: rem.name,
+          type: rem.type,
+          balanceCentavos: rem.balanceCentavos,
+          color: rem.color,
+          updatedAt: rem.updatedAt,
+        ),
+      ),
+      onInsert: (rem) => db.accountsDao.insertAccount(
+        AccountsCompanion(
+          name: Value(rem.name),
+          type: Value(rem.type),
+          balanceCentavos: Value(rem.balanceCentavos),
+          color: Value(rem.color),
+          remoteId: Value(rem.remoteId),
+          createdAt: Value(rem.createdAt),
+          updatedAt: Value(rem.updatedAt),
+        ),
+      ),
     );
   }
 
@@ -80,7 +84,8 @@ class SyncDownloadRepository {
     final remoteList = await remote.watchExpenses().first;
     final localList = await db.expensesDao.getAll();
     final localByRemoteId = {
-      for (final e in localList) if (e.remoteId != null) e.remoteId!: e,
+      for (final e in localList)
+        if (e.remoteId != null) e.remoteId!: e,
     };
 
     for (final rem in remoteList) {
@@ -91,25 +96,29 @@ class SyncDownloadRepository {
       final local = localByRemoteId[rem.remoteId];
       if (local != null) {
         if (rem.updatedAt.isAfter(local.updatedAt)) {
-          await db.expensesDao.updateExpense(local.copyWith(
-            amountCentavos: rem.amountCentavos,
-            description: rem.description,
-            date: rem.date,
-            categoryId: catId,
-            accountId: accId,
-            updatedAt: rem.updatedAt,
-          ));
+          await db.expensesDao.updateExpense(
+            local.copyWith(
+              amountCentavos: rem.amountCentavos,
+              description: rem.description,
+              date: rem.date,
+              categoryId: catId,
+              accountId: accId,
+              updatedAt: rem.updatedAt,
+            ),
+          );
         }
       } else {
-        await db.expensesDao.insertExpense(ExpensesCompanion(
-          amountCentavos: Value(rem.amountCentavos),
-          description: Value(rem.description),
-          date: Value(rem.date),
-          categoryId: Value(catId),
-          accountId: Value(accId),
-          remoteId: Value(rem.remoteId),
-          updatedAt: Value(rem.updatedAt),
-        ));
+        await db.expensesDao.insertExpense(
+          ExpensesCompanion(
+            amountCentavos: Value(rem.amountCentavos),
+            description: Value(rem.description),
+            date: Value(rem.date),
+            categoryId: Value(catId),
+            accountId: Value(accId),
+            remoteId: Value(rem.remoteId),
+            updatedAt: Value(rem.updatedAt),
+          ),
+        );
       }
     }
   }

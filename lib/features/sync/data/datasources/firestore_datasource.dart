@@ -6,15 +6,13 @@ import 'package:finly/features/sync/data/models/firestore_receipt.dart';
 
 class FirestoreDataSource {
   FirestoreDataSource({required this.userId, FirebaseFirestore? db})
-      : _db = db ?? FirebaseFirestore.instance;
+    : _db = db ?? FirebaseFirestore.instance;
 
   final String userId;
   final FirebaseFirestore _db;
 
   CollectionReference<Map<String, dynamic>> _col(String name) =>
       _db.collection('users').doc(userId).collection(name);
-
-  // --- Expenses ---
 
   Future<void> upsertExpense(FirestoreExpense expense) =>
       _col('expenses').doc(expense.remoteId).set(expense.toMap());
@@ -29,8 +27,6 @@ class FirestoreDataSource {
             .toList(),
       );
 
-  // --- Accounts ---
-
   Future<void> upsertAccount(FirestoreAccount account) =>
       _col('accounts').doc(account.remoteId).set(account.toMap());
 
@@ -44,8 +40,6 @@ class FirestoreDataSource {
             .toList(),
       );
 
-  // --- Categories ---
-
   Future<void> upsertCategory(FirestoreCategory category) =>
       _col('categories').doc(category.remoteId).set(category.toMap());
 
@@ -58,8 +52,6 @@ class FirestoreDataSource {
             .map((d) => FirestoreCategory.fromMap(d.id, d.data()))
             .toList(),
       );
-
-  // --- Receipts ---
 
   Future<void> upsertReceipt(FirestoreReceipt receipt) =>
       _col('receipts').doc(receipt.remoteId).set(receipt.toMap());

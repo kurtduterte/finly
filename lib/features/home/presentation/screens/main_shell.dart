@@ -35,16 +35,13 @@ const List<Widget> _allPages = [
   SettingsScreen(),
 ];
 
-// Scan tab is index 2 — not available on web.
-final _destinations =
-    kIsWeb
-        ? [_allDestinations[0], _allDestinations[1], _allDestinations[3]]
-        : _allDestinations;
+final _destinations = kIsWeb
+    ? [_allDestinations[0], _allDestinations[1], _allDestinations[3]]
+    : _allDestinations;
 
-final List<Widget> _pages =
-    kIsWeb
-        ? [_allPages[0], _allPages[1], _allPages[3]]
-        : _allPages;
+final List<Widget> _pages = kIsWeb
+    ? [_allPages[0], _allPages[1], _allPages[3]]
+    : _allPages;
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});

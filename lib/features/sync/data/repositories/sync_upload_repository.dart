@@ -6,10 +6,6 @@ import 'package:finly/features/sync/data/models/firestore_category.dart';
 import 'package:finly/features/sync/data/models/firestore_expense.dart';
 import 'package:uuid/uuid.dart';
 
-/// Pushes local SQLite records to Firestore.
-///
-/// Order: categories → accounts → expenses (expenses depend on the first two
-/// having a remoteId so cross-references can be stored).
 class SyncUploadRepository {
   const SyncUploadRepository({required this.db, required this.remote});
 
@@ -81,8 +77,6 @@ class SyncUploadRepository {
     for (final exp in expenses) {
       final catRemoteId = catRemoteById[exp.categoryId];
       final accRemoteId = accRemoteById[exp.accountId];
-      // Skip if dependencies haven't been synced yet (shouldn't happen since
-      // we upload categories + accounts first, but guard defensively).
       if (catRemoteId == null || accRemoteId == null) continue;
 
       final remoteId = exp.remoteId ?? _uuid.v4();

@@ -4,10 +4,29 @@ import 'package:finly/features/ai_chat/data/services/expense_extractor.dart';
 import 'package:finly/features/expenses/data/repositories/expenses_repository.dart';
 
 const financeKeywords = [
-  'expense', 'spend', 'spent', 'cost', 'buy', 'bought', 'purchase',
-  'money', 'budget', 'total', 'how much', 'paid', 'pay',
-  'transaction', 'account', 'balance', 'receipt', 'bill',
-  'price', 'debt', 'saving', 'income', 'salary',
+  'expense',
+  'spend',
+  'spent',
+  'cost',
+  'buy',
+  'bought',
+  'purchase',
+  'money',
+  'budget',
+  'total',
+  'how much',
+  'paid',
+  'pay',
+  'transaction',
+  'account',
+  'balance',
+  'receipt',
+  'bill',
+  'price',
+  'debt',
+  'saving',
+  'income',
+  'salary',
 ];
 
 const _system =
@@ -23,7 +42,7 @@ Future<List<AiMessage>> buildChatMessages({
     try {
       expenseBlock = buildExpenseContext(await expRepo.getRecentWithDetails());
     } on Exception {
-      // Proceed without expense context
+      expenseBlock = '';
     }
   }
 
@@ -35,10 +54,12 @@ Future<List<AiMessage>> buildChatMessages({
     turns.add(AiMessage(text: content));
   } else {
     final first = history.first;
-    turns.add(AiMessage(
-      text: '$_system\n\n${first.messageText}',
-      isUser: first.isUser == 1,
-    ));
+    turns.add(
+      AiMessage(
+        text: '$_system\n\n${first.messageText}',
+        isUser: first.isUser == 1,
+      ),
+    );
     for (final msg in history.skip(1)) {
       turns.add(AiMessage(text: msg.messageText, isUser: msg.isUser == 1));
     }

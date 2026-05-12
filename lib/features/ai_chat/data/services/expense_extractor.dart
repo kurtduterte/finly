@@ -102,8 +102,6 @@ ParsedExpense? parseExpenseResponse(
   }
 }
 
-/// Fast rule-based extractor for simple patterns — no LLM needed.
-/// Handles: "add expense 200 mcdo", "log expense ₱150 for lunch", etc.
 ParsedExpense? tryRuleBasedExtract(String msg, DateTime today) {
   final normalized = msg.trim();
   final m = RegExp(r'[₱]?\s*(\d+(?:[.,]\d{1,2})?)').firstMatch(normalized);

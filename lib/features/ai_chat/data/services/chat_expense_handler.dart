@@ -4,16 +4,12 @@ import 'package:finly/core/db/app_database.dart';
 import 'package:finly/features/ai_chat/data/services/expense_extractor.dart';
 import 'package:finly/features/expenses/data/repositories/expenses_repository.dart';
 
-/// Handles the "add expense" intent in chat by extracting and persisting
-/// the expense, then returning an AI reply message.
 class ChatExpenseHandler {
   const ChatExpenseHandler({required this.gemma, required this.expRepo});
 
   final GemmaService gemma;
   final ExpensesRepository expRepo;
 
-  /// Streams token updates via [onToken]. Returns the final AI reply or ''
-  /// if cancelled.
   Future<String> handle({
     required String userMessage,
     required void Function(String buffer) onToken,
@@ -25,7 +21,6 @@ class ChatExpenseHandler {
     final now = DateTime.now();
     final extractionInput = _pickExtractionInput(userMessage, contextMessage);
 
-    // Fast path: regex extraction — no LLM needed for simple patterns.
     var parsed = tryRuleBasedExtract(userMessage, now);
     parsed ??= extractionInput == userMessage
         ? null
@@ -36,7 +31,6 @@ class ChatExpenseHandler {
           'like: "coffee 260 lunch"';
     }
 
-    // Slow path: ask Gemma to extract structured data.
     if (parsed == null) {
       final messages = buildExpenseExtractionPrompt(
         userMessage: extractionInput,

@@ -4,7 +4,6 @@ import 'package:finly/features/ai_chat/presentation/widgets/chat_bubble.dart';
 import 'package:finly/features/ai_chat/presentation/widgets/typing_indicator_bubble.dart';
 import 'package:flutter/material.dart';
 
-/// Shows a typing indicator briefly, then reveals the greeting message.
 class TypingGreetingBubble extends StatefulWidget {
   const TypingGreetingBubble({required this.animate, super.key});
   final bool animate;

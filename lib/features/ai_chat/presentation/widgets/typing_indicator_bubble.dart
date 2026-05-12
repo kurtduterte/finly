@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-/// Bouncing three-dot typing indicator shown while AI is generating.
 class TypingIndicatorBubble extends StatefulWidget {
   const TypingIndicatorBubble({super.key});
 
