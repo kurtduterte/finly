@@ -14,12 +14,12 @@ class ScanProcessingView extends StatelessWidget {
   final VoidCallback onRetry;
 
   String get _statusLabel => switch (state.status) {
-        ScanStatus.pickingImage => 'Opening camera...',
-        ScanStatus.extractingText => 'Extracting text from receipt...',
-        ScanStatus.analyzingReceipt => 'Analyzing receipt with AI...',
-        ScanStatus.error => state.errorMessage ?? 'Something went wrong',
-        _ => '',
-      };
+    ScanStatus.pickingImage => 'Opening camera...',
+    ScanStatus.extractingText => 'Extracting text from receipt...',
+    ScanStatus.analyzingReceipt => 'Analyzing receipt with Mich...',
+    ScanStatus.error => state.errorMessage ?? 'Something went wrong',
+    _ => '',
+  };
 
   @override
   Widget build(BuildContext context) {

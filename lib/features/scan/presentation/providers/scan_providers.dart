@@ -1,9 +1,8 @@
-import 'package:drift/drift.dart' show Value;
 import 'package:finly/ai/gemma_service.dart';
 import 'package:finly/core/db/app_database.dart';
 import 'package:finly/features/ai_chat/data/models/parsed_expense.dart';
-import 'package:finly/features/ai_chat/data/services/expense_extractor.dart';
 import 'package:finly/features/expenses/presentation/providers/expenses_providers.dart';
+import 'package:finly/features/scan/data/repositories/scan_repository.dart';
 import 'package:finly/features/scan/data/services/receipt_analyzer_service.dart';
 import 'package:finly/features/scan/data/services/receipt_ocr_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -38,22 +37,6 @@ class ScanState {
   final ParsedExpense? parsedExpense;
   final int? receiptId;
   final String? errorMessage;
-
-  ScanState copyWith({
-    ScanStatus? status,
-    String? imagePath,
-    String? ocrText,
-    ParsedExpense? parsedExpense,
-    int? receiptId,
-    String? errorMessage,
-  }) => ScanState(
-    status: status ?? this.status,
-    imagePath: imagePath ?? this.imagePath,
-    ocrText: ocrText ?? this.ocrText,
-    parsedExpense: parsedExpense ?? this.parsedExpense,
-    receiptId: receiptId ?? this.receiptId,
-    errorMessage: errorMessage ?? this.errorMessage,
-  );
 }
 
 class ScanNotifier extends Notifier<ScanState> {
@@ -63,44 +46,21 @@ class ScanNotifier extends Notifier<ScanState> {
   Future<void> processReceipt(ImageSource source) async {
     state = const ScanState(status: ScanStatus.pickingImage);
     try {
-      final picker = ImagePicker();
-      final file = await picker.pickImage(source: source, imageQuality: 90);
-      if (file == null) {
+      final imagePath = await _pickImagePath(source);
+      if (imagePath == null) {
         state = const ScanState.idle();
         return;
       }
-      final imagePath = file.path;
 
-      state = ScanState(
-        status: ScanStatus.extractingText,
-        imagePath: imagePath,
-      );
-      final ocrText = await ReceiptOcrService().extractText(imagePath);
-
-      state = ScanState(
-        status: ScanStatus.analyzingReceipt,
+      final ocrText = await _extractReceiptText(imagePath);
+      final parsed = await _analyzeReceipt(
         imagePath: imagePath,
         ocrText: ocrText,
       );
-
-      final db = ref.read(appDatabaseProvider);
-      final categories = await ref.read(categoriesListProvider.future);
-      final accounts = await ref.read(accountsListProvider.future);
-      final gemma = ref.read(gemmaServiceProvider);
-
-      final parsed = await ReceiptAnalyzerService(gemma).analyze(
+      final receiptId = await _saveReceipt(
+        imagePath: imagePath,
         ocrText: ocrText,
-        categories: categories,
-        accounts: accounts,
-      );
-
-      final receiptId = await db.receiptsDao.insertReceipt(
-        ReceiptsCompanion.insert(
-          imagePath: imagePath,
-          aiRawResponse: Value(ocrText),
-          extractedAmountCentavos: Value(parsed?.amountCentavos),
-          extractedMerchant: Value(parsed?.description),
-        ),
+        parsedExpense: parsed,
       );
 
       state = ScanState(
@@ -118,9 +78,60 @@ class ScanNotifier extends Notifier<ScanState> {
     }
   }
 
+  Future<String?> _pickImagePath(ImageSource source) async {
+    final picked = await ImagePicker().pickImage(
+      source: source,
+      imageQuality: 100,
+    );
+    return picked?.path;
+  }
+
+  Future<String> _extractReceiptText(String imagePath) async {
+    state = ScanState(status: ScanStatus.extractingText, imagePath: imagePath);
+    return ReceiptOcrService().extractText(imagePath);
+  }
+
+  Future<ParsedExpense?> _analyzeReceipt({
+    required String imagePath,
+    required String ocrText,
+  }) async {
+    state = ScanState(
+      status: ScanStatus.analyzingReceipt,
+      imagePath: imagePath,
+      ocrText: ocrText,
+    );
+    final categories = await ref.read(categoriesListProvider.future);
+    final accounts = await ref.read(accountsListProvider.future);
+    final gemma = ref.read(gemmaServiceProvider);
+    return ReceiptAnalyzerService(gemma).analyze(
+      ocrText: ocrText,
+      categories: categories,
+      accounts: accounts,
+    );
+  }
+
+  Future<int> _saveReceipt({
+    required String imagePath,
+    required String ocrText,
+    required ParsedExpense? parsedExpense,
+  }) {
+    return ref
+        .read(scanRepositoryProvider)
+        .saveReceipt(
+          imagePath: imagePath,
+          ocrText: ocrText,
+          extractedAmountCentavos: parsedExpense?.amountCentavos,
+          extractedMerchant: parsedExpense?.description,
+        );
+  }
+
   void reset() => state = const ScanState.idle();
 }
 
 final scanStateProvider = NotifierProvider<ScanNotifier, ScanState>(
   ScanNotifier.new,
 );
+
+final scanRepositoryProvider = Provider<ScanRepository>((ref) {
+  return ScanRepository(db: ref.watch(appDatabaseProvider));
+});

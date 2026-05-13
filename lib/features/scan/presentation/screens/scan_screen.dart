@@ -6,6 +6,7 @@ import 'package:finly/features/scan/presentation/widgets/scan_action_buttons.dar
 import 'package:finly/features/scan/presentation/widgets/scan_processing_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 class ScanScreen extends ConsumerWidget {
   const ScanScreen({super.key});
@@ -20,8 +21,9 @@ class ScanScreen extends ConsumerWidget {
               .push(
                 MaterialPageRoute<void>(
                   builder: (_) => ExpenseFormScreen(
-                    prefill: ScanPrefill.fromParsed(
-                      next.parsedExpense,
+                    prefill: ScanPrefill.fromScanResult(
+                      parsed: next.parsedExpense,
+                      ocrText: next.ocrText,
                       receiptId: next.receiptId,
                     ),
                   ),
@@ -70,7 +72,22 @@ class ScanScreen extends ConsumerWidget {
               )
             else ...[
               const Spacer(),
-              const ScanActionButtons(),
+              ScanActionButtons(
+                onTakePhoto: () {
+                  unawaited(
+                    ref
+                        .read(scanStateProvider.notifier)
+                        .processReceipt(ImageSource.camera),
+                  );
+                },
+                onUploadReceipt: () {
+                  unawaited(
+                    ref
+                        .read(scanStateProvider.notifier)
+                        .processReceipt(ImageSource.gallery),
+                  );
+                },
+              ),
               const SizedBox(height: 32),
             ],
           ],

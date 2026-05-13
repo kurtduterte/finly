@@ -82,19 +82,25 @@ class _TotalBalanceHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final isLightMode = cs.brightness == Brightness.light;
+    final gradientColors = isLightMode
+        ? [cs.surface, cs.surfaceContainerHighest]
+        : [kCardGradientStart, kCardGradientEnd];
+    final borderColor = isLightMode ? cs.outline : cs.primaryContainer;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(kRadius16),
-          gradient: const LinearGradient(
+          borderRadius: BorderRadius.circular(kRadius20),
+          gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [kCardGradientStart, kCardGradientEnd],
+            colors: gradientColors,
           ),
-          border: Border.all(color: cs.primaryContainer, width: 0.8),
+          border: Border.all(color: borderColor, width: 0.8),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -108,7 +114,7 @@ class _TotalBalanceHeader extends StatelessWidget {
               formatPeso(totalCentavos),
               style: TextStyle(
                 color: cs.onSurface,
-                fontSize: 32,
+                fontSize: 36,
                 fontWeight: FontWeight.w700,
                 letterSpacing: -1,
               ),
