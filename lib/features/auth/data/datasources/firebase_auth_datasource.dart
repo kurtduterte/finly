@@ -23,8 +23,8 @@ class FirebaseAuthDatasource {
   FirebaseAuthDatasource({
     FirebaseAuth? auth,
     GoogleSignIn? googleSignIn,
-  })  : _auth = auth ?? FirebaseAuth.instance,
-        _googleSignIn = googleSignIn ?? _buildGoogleSignIn();
+  }) : _auth = auth ?? FirebaseAuth.instance,
+       _googleSignIn = googleSignIn ?? _buildGoogleSignIn();
 
   final FirebaseAuth _auth;
   final GoogleSignIn _googleSignIn;
@@ -53,12 +53,19 @@ class FirebaseAuthDatasource {
   Future<AuthUser> signUpWithEmail({
     required String email,
     required String password,
+    String? displayName,
   }) async {
     final cred = await _auth.createUserWithEmailAndPassword(
       email: email,
       password: password,
     );
-    return _toModel(cred.user!);
+    final user = cred.user!;
+    final normalizedName = displayName?.trim();
+    if (normalizedName != null && normalizedName.isNotEmpty) {
+      await user.updateDisplayName(normalizedName);
+      await user.reload();
+    }
+    return _toModel(_auth.currentUser ?? user);
   }
 
   Future<AuthUser> signInWithGoogle() async {
@@ -115,9 +122,9 @@ class FirebaseAuthDatasource {
   }
 
   AuthUser _toModel(User user) => AuthUser(
-        uid: user.uid,
-        email: user.email ?? '',
-        displayName: user.displayName,
-        photoUrl: user.photoURL,
-      );
+    uid: user.uid,
+    email: user.email ?? '',
+    displayName: user.displayName,
+    photoUrl: user.photoURL,
+  );
 }

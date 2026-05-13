@@ -22,8 +22,15 @@ class AuthNotifier extends AsyncNotifier<void> {
   Future<void> signUpWithEmail({
     required String email,
     required String password,
-  }) =>
-      _run(() => _repository.signUpWithEmail(email: email, password: password));
+    String? displayName,
+  }) => _run(() async {
+    await _repository.signUpWithEmail(
+      email: email,
+      password: password,
+      displayName: displayName,
+    );
+    await _repository.signOut();
+  });
 
   Future<void> signInWithGoogle() => _run(_repository.signInWithGoogle);
 

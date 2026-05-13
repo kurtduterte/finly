@@ -11,6 +11,7 @@ import 'package:finly/core/db/tables/chat_messages_table.dart';
 import 'package:finly/core/db/tables/conversations_table.dart';
 import 'package:finly/core/db/tables/expenses_table.dart';
 import 'package:finly/core/db/tables/receipts_table.dart';
+import 'package:finly/features/auth/presentation/providers/auth_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 part 'app_database.g.dart';
@@ -34,10 +35,10 @@ part 'seed_data.dart';
   ],
 )
 class AppDatabase extends _$AppDatabase {
-  AppDatabase()
+  AppDatabase({required String name})
     : super(
         driftDatabase(
-          name: 'finly_db',
+          name: name,
           web: DriftWebOptions(
             sqlite3Wasm: Uri.parse('sqlite3.wasm'),
             driftWorker: Uri.parse('drift_worker.js'),
@@ -95,8 +96,15 @@ class AppDatabase extends _$AppDatabase {
   );
 }
 
+String _databaseNameForUser(String? uid) {
+  if (uid == null || uid.isEmpty) return 'finly_db_guest';
+  final safeUid = uid.replaceAll(RegExp('[^a-zA-Z0-9_]'), '_');
+  return 'finly_db_user_$safeUid';
+}
+
 final appDatabaseProvider = Provider<AppDatabase>((ref) {
-  final db = AppDatabase();
+  final uid = ref.watch(authStateProvider).asData?.value?.uid;
+  final db = AppDatabase(name: _databaseNameForUser(uid));
   ref.onDispose(db.close);
   return db;
 });

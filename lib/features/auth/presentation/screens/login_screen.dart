@@ -112,11 +112,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 child: TextButton(
                   onPressed: isLoading
                       ? null
-                      : () => Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => const SignupScreen(),
-                          ),
-                        ),
+                      : () async {
+                          final message =
+                              await Navigator.of(
+                                context,
+                          ).push<String>(
+                            MaterialPageRoute<String>(
+                              builder: (_) => const SignupScreen(),
+                            ),
+                          );
+                          if (!context.mounted) return;
+                          if (message == null) return;
+                          ScaffoldMessenger.of(context)
+                            ..hideCurrentSnackBar()
+                            ..showSnackBar(
+                              SnackBar(content: Text(message)),
+                            );
+                        },
                   child: Text.rich(
                     TextSpan(
                       text: "Don't have an account? ",

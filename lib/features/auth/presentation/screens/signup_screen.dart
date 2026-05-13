@@ -14,24 +14,52 @@ class SignupScreen extends ConsumerStatefulWidget {
 }
 
 class _SignupScreenState extends ConsumerState<SignupScreen> {
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
 
   @override
   void dispose() {
+    _firstNameController.dispose();
+    _lastNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
+  String _displayName() {
+    final first = _firstNameController.text.trim();
+    final last = _lastNameController.text.trim();
+    return '$first $last'.trim();
+  }
+
   Future<void> _signUp() async {
+    final first = _firstNameController.text.trim();
+    final last = _lastNameController.text.trim();
+    if (first.isEmpty || last.isEmpty) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text('Please enter your first and last name.'),
+          ),
+        );
+      return;
+    }
+
     await ref
         .read(authNotifierProvider.notifier)
         .signUpWithEmail(
           email: _emailController.text.trim(),
           password: _passwordController.text,
+          displayName: _displayName(),
         );
+
+    final hasError = ref.read(authNotifierProvider).hasError;
+    if (!mounted || hasError) return;
+    Navigator.of(context).pop('Account created successfully. Please sign in.');
   }
 
   @override
@@ -73,6 +101,20 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 AuthErrorBanner(error: authState.error!),
                 const SizedBox(height: 16),
               ],
+              AuthTextField(
+                controller: _firstNameController,
+                label: 'First name',
+                hint: 'Juan',
+                textInputAction: TextInputAction.next,
+              ),
+              const SizedBox(height: 14),
+              AuthTextField(
+                controller: _lastNameController,
+                label: 'Last name',
+                hint: 'Dela Cruz',
+                textInputAction: TextInputAction.next,
+              ),
+              const SizedBox(height: 14),
               AuthTextField(
                 controller: _emailController,
                 label: 'Email address',

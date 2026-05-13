@@ -11,14 +11,17 @@ class AuthRepository {
   Future<AuthUser> signInWithEmail({
     required String email,
     required String password,
-  }) =>
-      _datasource.signInWithEmail(email: email, password: password);
+  }) => _datasource.signInWithEmail(email: email, password: password);
 
   Future<AuthUser> signUpWithEmail({
     required String email,
     required String password,
-  }) =>
-      _datasource.signUpWithEmail(email: email, password: password);
+    String? displayName,
+  }) => _datasource.signUpWithEmail(
+    email: email,
+    password: password,
+    displayName: displayName,
+  );
 
   Future<AuthUser> signInWithGoogle() => _datasource.signInWithGoogle();
 
@@ -30,11 +33,10 @@ class AuthRepository {
   Future<void> updatePassword({
     required String currentPassword,
     required String newPassword,
-  }) =>
-      _datasource.updatePassword(
-        currentPassword: currentPassword,
-        newPassword: newPassword,
-      );
+  }) => _datasource.updatePassword(
+    currentPassword: currentPassword,
+    newPassword: newPassword,
+  );
 
   bool get isEmailUser => _datasource.isEmailUser;
 }
