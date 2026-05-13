@@ -122,6 +122,7 @@ class ReceiptAnalyzerService {
   }) {
     final amountCentavos = _resolveAmountCentavos(
       ocrAmountCentavos: insights.amountCentavos,
+      ocrAmountConfidence: insights.amountConfidence,
       parsedAmountCentavos: extracted.amountCentavos,
     );
     final description = extracted.description.trim().isEmpty
@@ -146,12 +147,34 @@ class ReceiptAnalyzerService {
 
   int _resolveAmountCentavos({
     required int? ocrAmountCentavos,
+    required int ocrAmountConfidence,
     required int parsedAmountCentavos,
   }) {
-    if (ocrAmountCentavos != null && ocrAmountCentavos > 0) {
-      return ocrAmountCentavos;
+    if (ocrAmountCentavos == null || ocrAmountCentavos <= 0) {
+      return parsedAmountCentavos;
     }
-    return parsedAmountCentavos;
+    if (parsedAmountCentavos <= 0) return ocrAmountCentavos;
+    if (parsedAmountCentavos == ocrAmountCentavos) return ocrAmountCentavos;
+
+    final diffCentavos = (parsedAmountCentavos - ocrAmountCentavos).abs();
+    if (diffCentavos <= 100) return ocrAmountCentavos;
+
+    final bigger = parsedAmountCentavos > ocrAmountCentavos
+        ? parsedAmountCentavos
+        : ocrAmountCentavos;
+    final smaller = parsedAmountCentavos < ocrAmountCentavos
+        ? parsedAmountCentavos
+        : ocrAmountCentavos;
+    final mismatchRatio = smaller == 0 ? 999.0 : bigger / smaller;
+
+    if (ocrAmountConfidence >= 16) return ocrAmountCentavos;
+    if (ocrAmountConfidence <= 10 && mismatchRatio >= 1.2) {
+      return parsedAmountCentavos;
+    }
+    if (ocrAmountConfidence <= 13 && mismatchRatio >= 2.0) {
+      return parsedAmountCentavos;
+    }
+    return ocrAmountCentavos;
   }
 
   String _resolveDefaultAccount(List<Account> accounts) {

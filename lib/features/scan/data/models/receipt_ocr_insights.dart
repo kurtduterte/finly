@@ -2,22 +2,26 @@ class ReceiptOcrInsights {
   const ReceiptOcrInsights({
     this.merchant,
     this.amountCentavos,
+    this.amountConfidence = 0,
   });
 
   factory ReceiptOcrInsights.fromText(String? ocrText) {
     final lines = _extractLines(ocrText);
     if (lines.isEmpty) return const ReceiptOcrInsights();
+    final amountCandidate = _extractAmountCandidate(lines);
     return ReceiptOcrInsights(
       merchant: _extractMerchant(lines),
-      amountCentavos: _extractAmountCentavos(lines),
+      amountCentavos: amountCandidate?.centavos,
+      amountConfidence: amountCandidate?.score ?? 0,
     );
   }
 
   final String? merchant;
   final int? amountCentavos;
+  final int amountConfidence;
 
   static final _amountPattern = RegExp(
-    r'(?:₱|PHP|Php|php)?\s*((?:[0-9]{1,3}(?:,[0-9]{3})+|[0-9]+)(?:[.,][0-9]{1,2})?)',
+    r'(?:₱|PHP|Php|php)?\s*((?:[0-9Oo]{1,3}(?:[,\s][0-9Oo]{3})+|[0-9Oo]+)(?:[.,][0-9Oo]{1,2})?)',
   );
   static final _merchantNoisePattern = RegExp(
     '(official receipt|receipt no|invoice|vat|tin|cashier|qty|quantity|'
@@ -26,7 +30,7 @@ class ReceiptOcrInsights {
     caseSensitive: false,
   );
   static final _strongTotalPattern = RegExp(
-    r'(grand\s*total|net\s*total|amount\s*due|balance\s*due|total\s*due|amount\s*payable)',
+    r'(grand\s*total|net\s*total|total\s*amount|amount\s*total|final\s*total|amount\s*due|balance\s*due|total\s*due|amount\s*payable)',
     caseSensitive: false,
   );
   static final _weakTotalPattern = RegExp(r'\btotal\b', caseSensitive: false);
@@ -36,6 +40,10 @@ class ReceiptOcrInsights {
   );
   static final _negativeAmountPattern = RegExp(
     '(sub[- ]?total|vat|tax|discount|change|cash|tendered|paid|round[- ]?off)',
+    caseSensitive: false,
+  );
+  static final _totalItemsPattern = RegExp(
+    r'(total\s*(items?|qty|quantity)|items?\s*total)',
     caseSensitive: false,
   );
   static final _paymentHintPattern = RegExp(
@@ -50,7 +58,7 @@ class ReceiptOcrInsights {
   static final _dateLikePattern = RegExp(r'\b\d{1,4}[/-]\d{1,2}[/-]\d{1,4}\b');
   static final _timeLikePattern = RegExp(r'\b\d{1,2}:\d{2}(?::\d{2})?\b');
   static final _amountOnlyLinePattern = RegExp(
-    r'^(?:₱|PHP|Php|php)?\s*[0-9]+(?:[,.][0-9]+)*\s*$',
+    r'^(?:₱|PHP|Php|php)?\s*(?:[0-9Oo]{1,3}(?:[,\s][0-9Oo]{3})+|[0-9Oo]+)(?:[.,][0-9Oo]{1,2})?\s*$',
   );
   static final _hasLetterPattern = RegExp('[A-Za-z]');
   static final _hasDigitPattern = RegExp(r'\d');
@@ -96,10 +104,9 @@ class ReceiptOcrInsights {
     return score;
   }
 
-  static int? _extractAmountCentavos(List<String> lines) {
+  static _AmountCandidate? _extractAmountCandidate(List<String> lines) {
     final amountFrequency = _buildAmountFrequency(lines);
-    int? bestAmountCentavos;
-    var bestScore = -1000;
+    _AmountCandidate? best;
 
     for (var i = 0; i < lines.length; i++) {
       final line = lines[i];
@@ -123,6 +130,7 @@ class ReceiptOcrInsights {
       final hasStrongTotal = hasStrongTotalInLine || hasStrongTotalNearby;
       final hasWeakTotal = hasWeakTotalInLine || hasWeakTotalNearby;
       final hasNegativeAmountHint = _negativeAmountPattern.hasMatch(lower);
+      final hasTotalItemsHint = _totalItemsPattern.hasMatch(lower);
       final hasCurrencyHint = line.contains('₱') || lower.contains('php');
       final isAmountOnlyLine = _amountOnlyLinePattern.hasMatch(line.trim());
       final totalLabelMatch = hasStrongTotalInLine
@@ -157,7 +165,9 @@ class ReceiptOcrInsights {
         if (amount == null || amount <= 0 || amount > 1000000) continue;
 
         final hasDecimalSeparator =
-            raw.contains('.') || _looksLikeDecimalComma(raw);
+            raw.contains('.') ||
+            _looksLikeDecimalComma(raw) ||
+            _looksLikeDecimalComma(_normalizeRawAmount(raw));
         final isBareInteger = !hasDecimalSeparator;
         if (isBareInteger &&
             raw.length >= 6 &&
@@ -175,8 +185,9 @@ class ReceiptOcrInsights {
         if (hasWeakTotalInLine) score += 7;
         if (hasWeakTotalBefore) score += 4;
         if (hasWeakTotalAfter) score -= 2;
-        if (hasCurrencyHint) score += 2;
+        if (hasCurrencyHint) score += 3;
         if (hasNegativeAmountHint) score -= 12;
+        if (hasTotalItemsHint) score -= 10;
         if (hasDecimalSeparator) score += 3;
         if (!hasDecimalSeparator && hasDecimalInLine) score -= 4;
         if (isBareInteger && raw.length >= 4) score -= 2;
@@ -204,18 +215,15 @@ class ReceiptOcrInsights {
         if (repeatedCount > 1) {
           score += (repeatedCount - 1) * 2;
         }
-        if (score > bestScore ||
-            (score == bestScore &&
-                (bestAmountCentavos == null ||
-                    centavos > bestAmountCentavos))) {
-          bestScore = score;
-          bestAmountCentavos = centavos;
+        final candidate = _AmountCandidate(centavos: centavos, score: score);
+        if (_isBetterCandidate(candidate, best)) {
+          best = candidate;
         }
       }
     }
 
-    if (bestScore < 7) return null;
-    return bestAmountCentavos;
+    if (best == null || best.score < 7) return null;
+    return best;
   }
 
   static bool _hasStrongTotalHint(String lowerLine) {
@@ -248,11 +256,25 @@ class ReceiptOcrInsights {
     return RegExp(r'^\d+,\d{1,2}$').hasMatch(raw);
   }
 
+  static String _normalizeRawAmount(String raw) {
+    return raw.replaceAll(' ', '').replaceAll('O', '0').replaceAll('o', '0');
+  }
+
   static double? _tryParseAmount(String raw) {
-    if (_looksLikeDecimalComma(raw)) {
-      return double.tryParse(raw.replaceFirst(',', '.'));
+    final normalized = _normalizeRawAmount(raw);
+    if (_looksLikeDecimalComma(normalized)) {
+      return double.tryParse(normalized.replaceFirst(',', '.'));
     }
-    return double.tryParse(raw.replaceAll(',', ''));
+    return double.tryParse(normalized.replaceAll(',', ''));
+  }
+
+  static bool _isBetterCandidate(
+    _AmountCandidate candidate,
+    _AmountCandidate? best,
+  ) {
+    if (best == null) return true;
+    if (candidate.score != best.score) return candidate.score > best.score;
+    return candidate.centavos > best.centavos;
   }
 
   static bool _hasIdentifierHint(String line, int matchStart) {
@@ -268,4 +290,14 @@ class ReceiptOcrInsights {
     final context = line.substring(contextStart, matchStart).toLowerCase();
     return _paymentHintPattern.hasMatch(context.trim());
   }
+}
+
+class _AmountCandidate {
+  const _AmountCandidate({
+    required this.centavos,
+    required this.score,
+  });
+
+  final int centavos;
+  final int score;
 }
