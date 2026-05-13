@@ -35,9 +35,7 @@ class MessageList extends StatelessWidget {
           final msg = messages[msgIndex];
           return ChatBubble(text: msg.messageText, isUser: msg.isUser == 1);
         }
-        return chatState.streamingBuffer.isNotEmpty
-            ? ChatBubble(text: chatState.streamingBuffer, isUser: false)
-            : const TypingIndicatorBubble();
+        return const TypingIndicatorBubble();
       },
     );
   }
