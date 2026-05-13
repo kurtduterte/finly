@@ -9,6 +9,7 @@ import 'package:finly/features/settings/presentation/screens/edit_profile_screen
 import 'package:finly/features/settings/presentation/widgets/profile_card.dart';
 import 'package:finly/features/settings/presentation/widgets/section_label.dart';
 import 'package:finly/features/settings/presentation/widgets/settings_tile.dart';
+import 'package:finly/features/sync/presentation/providers/sync_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -38,6 +39,29 @@ class SettingsScreen extends ConsumerWidget {
     Future<void> openScreen(Widget screen) => Navigator.of(
       context,
     ).push(MaterialPageRoute<void>(builder: (_) => screen));
+
+    Future<void> onSyncChanged({required bool enabled}) async {
+      await ref.read(syncEnabledProvider.notifier).toggle();
+      if (!context.mounted || !enabled) return;
+      final syncState = ref.read(syncNotifierProvider);
+      if (syncState.isSuccess) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            const SnackBar(
+              content: Text('Syncing is successful'),
+            ),
+          );
+        return;
+      }
+      if (syncState.error != null) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(content: Text('Sync failed: ${syncState.error}')),
+          );
+      }
+    }
 
     return SafeArea(
       child: ListView(
@@ -99,9 +123,7 @@ class SettingsScreen extends ConsumerWidget {
             title: 'Sync to Firebase',
             trailing: Switch(
               value: syncEnabled,
-              onChanged: (_) => unawaited(
-                ref.read(syncEnabledProvider.notifier).toggle(),
-              ),
+              onChanged: (value) => unawaited(onSyncChanged(enabled: value)),
               activeThumbColor: colorScheme.primary,
             ),
           ),

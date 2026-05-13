@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:finly/features/auth/presentation/providers/auth_providers.dart';
 import 'package:finly/features/sync/data/datasources/firestore_datasource.dart';
+import 'package:finly/features/sync/presentation/providers/sync_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -90,5 +91,9 @@ class SyncEnabledNotifier extends AsyncNotifier<bool> {
     }
 
     state = AsyncData(newValue);
+
+    if (newValue) {
+      await ref.read(syncNotifierProvider.notifier).syncNow();
+    }
   }
 }
