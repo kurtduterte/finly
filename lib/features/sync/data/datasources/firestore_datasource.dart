@@ -14,6 +14,13 @@ class FirestoreDataSource {
   CollectionReference<Map<String, dynamic>> _col(String name) =>
       _db.collection('users').doc(userId).collection(name);
 
+  DocumentReference<Map<String, dynamic>> _settingsDoc() =>
+      _db
+          .collection('users')
+          .doc(userId)
+          .collection('metadata')
+          .doc('settings');
+
   Future<void> _upsert(
     String collection,
     String remoteId,
@@ -65,4 +72,22 @@ class FirestoreDataSource {
 
   Stream<List<FirestoreReceipt>> watchReceipts() =>
       _watchCollection('receipts', FirestoreReceipt.fromMap);
+
+  Future<void> setSyncEnabled({required bool enabled}) =>
+      _settingsDoc().set({'syncEnabled': enabled});
+
+  Future<bool> getSyncEnabled() async {
+    try {
+      final doc = await _settingsDoc().get();
+      return doc.data()?['syncEnabled'] as bool? ?? false;
+    } on Exception {
+      return false;
+    }
+  }
+
+  Stream<bool> watchSyncEnabled() {
+    return _settingsDoc().snapshots().map(
+      (doc) => doc.data()?['syncEnabled'] as bool? ?? false,
+    );
+  }
 }

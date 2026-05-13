@@ -12,7 +12,7 @@ run: .pub-cache-stamp
 run-android: .pub-cache-stamp
 	emulator -avd Pixel_5_API_34 -window-pos 0 0 0 0 &
 	sleep 3
-	flutter run -d android --dart-define-from-file=.env.json
+	flutter run -d emulator-5554 --dart-define-from-file=.env.json
 
 run-web: .pub-cache-stamp
 	flutter run -d web-server --web-port=3000 --dart-define-from-file=.env.json

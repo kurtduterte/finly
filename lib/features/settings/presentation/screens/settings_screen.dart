@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:finly/core/theme/theme_provider.dart';
 import 'package:finly/features/auth/presentation/providers/auth_providers.dart';
 import 'package:finly/features/model_setup/presentation/widgets/gemma_status_icon.dart';
+import 'package:finly/features/settings/presentation/providers/settings_providers.dart';
 import 'package:finly/features/settings/presentation/screens/change_password_screen.dart';
 import 'package:finly/features/settings/presentation/screens/edit_profile_screen.dart';
 import 'package:finly/features/settings/presentation/widgets/profile_card.dart';
@@ -26,6 +27,8 @@ class SettingsScreen extends ConsumerWidget {
     final user = ref.watch(authStateProvider).value;
     final themeMode = ref.watch(themeModeProvider);
     final isDark = themeMode == ThemeMode.dark;
+    final syncEnabledAsync = ref.watch(syncEnabledProvider);
+    final syncEnabled = syncEnabledAsync.asData?.value ?? false;
     final displayName = _resolveDisplayName(
       displayName: user?.displayName,
       email: user?.email,
@@ -87,6 +90,20 @@ class SettingsScreen extends ConsumerWidget {
             title: 'Sign out',
             titleColor: colorScheme.error,
             onTap: () => ref.read(authNotifierProvider.notifier).signOut(),
+          ),
+          const SizedBox(height: 16),
+          const SectionLabel(label: 'Data'),
+          SettingsTile(
+            icon: Icons.cloud_sync_rounded,
+            iconColor: colorScheme.primary,
+            title: 'Sync to Firebase',
+            trailing: Switch(
+              value: syncEnabled,
+              onChanged: (_) => unawaited(
+                ref.read(syncEnabledProvider.notifier).toggle(),
+              ),
+              activeThumbColor: colorScheme.primary,
+            ),
           ),
           const SizedBox(height: 16),
           const SectionLabel(label: 'AI Model'),

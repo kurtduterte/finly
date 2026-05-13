@@ -20,35 +20,30 @@ class ChatExpenseHandler {
     final accounts = await expRepo.getAllAccounts();
     final now = DateTime.now();
     final extractionInput = _pickExtractionInput(userMessage, contextMessage);
+    final shouldRunAiExtraction = hasAmountHint(extractionInput);
 
-    var parsed = tryRuleBasedExtract(userMessage, now);
+    var parsed = tryRuleBasedExtract(userMessage, now, accounts: accounts);
     parsed ??= extractionInput == userMessage
         ? null
-        : tryRuleBasedExtract(extractionInput, now);
+        : tryRuleBasedExtract(extractionInput, now, accounts: accounts);
 
-    if (parsed == null && !hasAmountHint(extractionInput)) {
+    if (parsed == null && !shouldRunAiExtraction) {
       return 'Please include an amount and description, '
           'like: "coffee 260 lunch"';
     }
 
-    if (parsed == null) {
-      final messages = buildExpenseExtractionPrompt(
+    if (shouldRunAiExtraction) {
+      final aiParsed = await _extractWithAi(
         userMessage: extractionInput,
         categories: categories,
         accounts: accounts,
         today: now,
+        fallbackDescription: parsed?.description ?? extractionInput,
+        onToken: onToken,
+        isCancelled: isCancelled,
       );
-      final buffer = StringBuffer();
-      await for (final token in gemma.streamMessages(messages)) {
-        if (isCancelled()) return '';
-        buffer.write(token);
-        onToken(buffer.toString());
-      }
       if (isCancelled()) return '';
-      parsed = parseExpenseResponse(
-        buffer.toString(),
-        fallbackDescription: extractionInput,
-      );
+      parsed = aiParsed ?? parsed;
     }
 
     if (parsed == null) {
@@ -92,5 +87,35 @@ class ChatExpenseHandler {
       return context;
     }
     return userMessage;
+  }
+
+  Future<ParsedExpense?> _extractWithAi({
+    required String userMessage,
+    required List<Category> categories,
+    required List<Account> accounts,
+    required DateTime today,
+    required String fallbackDescription,
+    required void Function(String buffer) onToken,
+    required bool Function() isCancelled,
+  }) async {
+    final messages = buildExpenseExtractionPrompt(
+      userMessage: userMessage,
+      categories: categories,
+      accounts: accounts,
+      today: today,
+    );
+    final buffer = StringBuffer();
+
+    await for (final token in gemma.streamMessages(messages)) {
+      if (isCancelled()) return null;
+      buffer.write(token);
+      onToken(buffer.toString());
+    }
+
+    if (isCancelled()) return null;
+    return parseExpenseResponse(
+      buffer.toString(),
+      fallbackDescription: fallbackDescription,
+    );
   }
 }

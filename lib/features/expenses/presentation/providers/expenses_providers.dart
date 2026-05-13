@@ -1,6 +1,8 @@
 import 'package:finly/core/db/app_database.dart';
 import 'package:finly/core/db/daos/expenses_dao.dart';
 import 'package:finly/features/expenses/data/repositories/expenses_repository.dart';
+import 'package:finly/features/settings/presentation/providers/settings_providers.dart';
+import 'package:finly/features/sync/presentation/providers/sync_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final expensesRepositoryProvider = Provider<ExpensesRepository>((ref) {
@@ -23,14 +25,27 @@ class ExpensesNotifier extends AsyncNotifier<void> {
   @override
   Future<void> build() async {}
 
-  Future<void> add(ExpensesCompanion entry) =>
-      ref.read(expensesRepositoryProvider).addExpense(entry);
+  Future<void> add(ExpensesCompanion entry) async {
+    await ref.read(expensesRepositoryProvider).addExpense(entry);
+    await _syncIfEnabled();
+  }
 
-  Future<void> updateExpense(Expense expense) =>
-      ref.read(expensesRepositoryProvider).updateExpense(expense);
+  Future<void> updateExpense(Expense expense) async {
+    await ref.read(expensesRepositoryProvider).updateExpense(expense);
+    await _syncIfEnabled();
+  }
 
-  Future<void> delete(int id) =>
-      ref.read(expensesRepositoryProvider).deleteExpense(id);
+  Future<void> delete(int id) async {
+    await ref.read(expensesRepositoryProvider).deleteExpense(id);
+    await _syncIfEnabled();
+  }
+
+  Future<void> _syncIfEnabled() async {
+    final syncEnabledAsync = ref.read(syncEnabledProvider);
+    final syncEnabled = syncEnabledAsync.asData?.value ?? false;
+    if (!syncEnabled) return;
+    await ref.read(syncNotifierProvider.notifier).syncNow();
+  }
 }
 
 final expensesNotifierProvider =
