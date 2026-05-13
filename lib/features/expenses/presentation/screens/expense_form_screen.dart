@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:drift/drift.dart' show Value;
 import 'package:finly/core/db/app_database.dart';
 import 'package:finly/core/db/daos/expenses_dao.dart';
 import 'package:finly/features/expenses/presentation/providers/expenses_providers.dart';
 import 'package:finly/features/expenses/presentation/widgets/expense_form_fields.dart';
 import 'package:finly/features/scan/data/models/scan_prefill.dart';
+import 'package:finly/features/sync/presentation/providers/sync_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -171,6 +174,28 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
     if (categories.hasValue && accounts.hasValue) {
       _applyPrefillSelections(categories.value!, accounts.value!);
     }
+
+    ref.listen(syncNotifierProvider, (prev, next) {
+      if (prev != null && next.isSuccess && !prev.isSuccess) {
+        unawaited(
+          showDialog<void>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Sync Successful'),
+              content: const Text(
+                'Your expenses have been synced to the Database.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+    });
 
     return Scaffold(
       appBar: AppBar(

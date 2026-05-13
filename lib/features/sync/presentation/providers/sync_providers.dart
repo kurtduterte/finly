@@ -12,17 +12,25 @@ class SyncState {
     this.isSyncing = false,
     this.lastSyncAt,
     this.error,
+    this.isSuccess = false,
   });
 
   final bool isSyncing;
   final DateTime? lastSyncAt;
   final String? error;
+  final bool isSuccess;
 
-  SyncState copyWith({bool? isSyncing, DateTime? lastSyncAt, String? error}) =>
+  SyncState copyWith({
+    bool? isSyncing,
+    DateTime? lastSyncAt,
+    String? error,
+    bool? isSuccess,
+  }) =>
       SyncState(
         isSyncing: isSyncing ?? this.isSyncing,
         lastSyncAt: lastSyncAt ?? this.lastSyncAt,
         error: error,
+        isSuccess: isSuccess ?? this.isSuccess,
       );
 }
 
@@ -49,7 +57,7 @@ class SyncNotifier extends Notifier<SyncState> {
     try {
       await upload.uploadAll();
       await download.downloadAll();
-      state = SyncState(lastSyncAt: DateTime.now());
+      state = SyncState(lastSyncAt: DateTime.now(), isSuccess: true);
     } on Exception catch (e) {
       state = SyncState(error: e.toString());
     }
