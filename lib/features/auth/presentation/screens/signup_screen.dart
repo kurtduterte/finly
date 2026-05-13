@@ -49,13 +49,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       return;
     }
 
-    await ref
-        .read(authNotifierProvider.notifier)
-        .signUpWithEmail(
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
-          displayName: _displayName(),
-        );
+    await ref.read(authNotifierProvider.notifier).signUpWithEmail(
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
+      displayName: _displayName(),
+    );
 
     final hasError = ref.read(authNotifierProvider).hasError;
     if (!mounted || hasError) return;
