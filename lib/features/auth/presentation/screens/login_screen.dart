@@ -81,7 +81,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               AuthTextField(
                 controller: _emailController,
                 label: 'Email address',
-                hint: 'you@example.com',
+                hint: 'email@email.com',
                 keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.next,
               ),
@@ -116,11 +116,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           final message =
                               await Navigator.of(
                                 context,
-                          ).push<String>(
-                            MaterialPageRoute<String>(
-                              builder: (_) => const SignupScreen(),
-                            ),
-                          );
+                              ).push<String>(
+                                MaterialPageRoute<String>(
+                                  builder: (_) => const SignupScreen(),
+                                ),
+                              );
                           if (!context.mounted) return;
                           if (message == null) return;
                           ScaffoldMessenger.of(context)

@@ -118,7 +118,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
               AuthTextField(
                 controller: _emailController,
                 label: 'Email address',
-                hint: 'you@example.com',
+                hint: 'email@email.com',
                 keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.next,
               ),
